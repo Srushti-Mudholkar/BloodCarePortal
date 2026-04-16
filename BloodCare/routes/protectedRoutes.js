@@ -1,10 +1,15 @@
-import express from 'express';
-import {authMiddleware} from '../middlewares/authMiddleware.js';
+import express from "express";
+import { authMiddleware } from "../middlewares/authMiddleware.js";
 
-const protectedRoutes = express.Router();
+const protectedRouter = express.Router();
 
-/* protectedRoutes.get('/protected', authMiddleware, (req, res) => {
-  res.json({ message: 'You are authorized to access this protected resource.'});
-}); */
+// Example protected route
+protectedRouter.get("/dashboard", authMiddleware, (req, res) => {
+  res.status(200).send({
+    success: true,
+    message: "Welcome to your dashboard",
+    userId: req.body.userId,
+  });
+});
 
-export default protectedRoutes;
+export default protectedRouter;

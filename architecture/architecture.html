@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BloodCare — Full Architecture Diagram</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+
+  /* ── NAV ── */
+  nav { background: linear-gradient(135deg,#b91c1c,#dc2626); padding: 16px 32px; display:flex; align-items:center; gap:12px; position:sticky; top:0; z-index:100; box-shadow:0 4px 20px rgba(0,0,0,.4); }
+  nav .logo { font-size:24px; font-weight:800; color:#fff; letter-spacing:1px; }
+  nav .sub  { font-size:13px; color:rgba(255,255,255,.75); margin-left:auto; }
+
+  /* ── TABS ── */
+  .tabs { display:flex; gap:4px; padding:20px 32px 0; flex-wrap:wrap; }
+  .tab  { padding:10px 20px; border-radius:10px 10px 0 0; cursor:pointer; font-size:13px; font-weight:600; background:#1e293b; color:#94a3b8; border:1px solid #334155; border-bottom:none; transition:all .2s; }
+  .tab:hover  { background:#334155; color:#e2e8f0; }
+  .tab.active { background:#1e3a5f; color:#60a5fa; border-color:#3b82f6; }
+
+  /* ── PANELS ── */
+  .panel { display:none; padding:24px 32px 40px; }
+  .panel.active { display:block; }
+
+  /* ── SECTION TITLE ── */
+  .section-title { font-size:22px; font-weight:800; color:#f1f5f9; margin-bottom:20px; padding-bottom:10px; border-bottom:2px solid #334155; display:flex; align-items:center; gap:10px; }
+
+  /* ── GRID HELPERS ── */
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; }
+  .grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+
+  /* ── CARD ── */
+  .card { background:#1e293b; border:1px solid #334155; border-radius:14px; padding:20px; }
+  .card-title { font-size:14px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.8px; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+  .card-title .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+  /* ── BADGE ── */
+  .badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+  .badge-red    { background:#fef2f2; color:#dc2626; }
+  .badge-blue   { background:#eff6ff; color:#2563eb; }
+  .badge-green  { background:#f0fdf4; color:#16a34a; }
+  .badge-purple { background:#faf5ff; color:#7c3aed; }
+  .badge-orange { background:#fff7ed; color:#ea580c; }
+  .badge-gray   { background:#f1f5f9; color:#475569; }
+  .badge-yellow { background:#fefce8; color:#ca8a04; }
+
+  /* ── TAG ── */
+  .tag { display:inline-block; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:600; margin:2px; }
+  .tag-get    { background:#1d4ed8; color:#bfdbfe; }
+  .tag-post   { background:#15803d; color:#bbf7d0; }
+  .tag-put    { background:#b45309; color:#fde68a; }
+  .tag-delete { background:#b91c1c; color:#fecaca; }
+  .tag-auth   { background:#6d28d9; color:#ddd6fe; }
+  .tag-open   { background:#0f766e; color:#99f6e4; }
+
+  /* ── LIST ── */
+  ul.arch-list { list-style:none; }
+  ul.arch-list li { padding:7px 0; border-bottom:1px solid #1e293b; font-size:13px; color:#cbd5e1; display:flex; align-items:flex-start; gap:8px; }
+  ul.arch-list li:last-child { border-bottom:none; }
+  ul.arch-list li::before { content:"▸"; color:#ef4444; flex-shrink:0; margin-top:1px; }
+
+  /* ── FLOW DIAGRAM ── */
+  .flow { display:flex; align-items:center; flex-wrap:wrap; gap:0; margin:16px 0; }
+  .flow-box { background:#1e3a5f; border:1px solid #3b82f6; border-radius:10px; padding:10px 16px; font-size:12px; font-weight:600; color:#93c5fd; text-align:center; min-width:110px; }
+  .flow-box.red    { background:#3b0a0a; border-color:#ef4444; color:#fca5a5; }
+  .flow-box.green  { background:#052e16; border-color:#22c55e; color:#86efac; }
+  .flow-box.purple { background:#2e1065; border-color:#a855f7; color:#d8b4fe; }
+  .flow-box.orange { background:#431407; border-color:#f97316; color:#fdba74; }
+  .flow-box.gray   { background:#1e293b; border-color:#64748b; color:#94a3b8; }
+  .flow-arrow { font-size:18px; color:#64748b; padding:0 6px; }
+  .flow-label { font-size:10px; color:#64748b; text-align:center; margin-top:4px; }
+
+  /* ── TABLE ── */
+  table.arch-table { width:100%; border-collapse:collapse; font-size:12px; }
+  table.arch-table th { background:#0f172a; color:#94a3b8; padding:10px 12px; text-align:left; font-weight:700; text-transform:uppercase; letter-spacing:.6px; border-bottom:2px solid #334155; }
+  table.arch-table td { padding:9px 12px; border-bottom:1px solid #1e293b; color:#cbd5e1; vertical-align:top; }
+  table.arch-table tr:hover td { background:#1e293b; }
+
+  /* ── ARCH OVERVIEW SVG AREA ── */
+  .arch-svg-wrap { background:#0f172a; border:1px solid #334155; border-radius:16px; padding:24px; overflow-x:auto; }
+
+  /* ── LAYER BOX ── */
+  .layer { border-radius:14px; padding:16px 20px; margin-bottom:16px; }
+  .layer-client { background:linear-gradient(135deg,#1e3a5f22,#1e3a5f44); border:1px solid #3b82f6; }
+  .layer-server { background:linear-gradient(135deg,#052e1622,#052e1644); border:1px solid #22c55e; }
+  .layer-db     { background:linear-gradient(135deg,#2e106522,#2e106544); border:1px solid #a855f7; }
+  .layer-email  { background:linear-gradient(135deg,#43140722,#43140744); border:1px solid #f97316; }
+  .layer-title  { font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; }
+
+  /* ── COMPONENT PILL ── */
+  .pill { display:inline-flex; align-items:center; gap:6px; background:#0f172a; border:1px solid #334155; border-radius:8px; padding:6px 12px; font-size:12px; color:#e2e8f0; margin:4px; }
+
+  /* ── CONNECTOR ── */
+  .connector { text-align:center; color:#64748b; font-size:20px; margin:4px 0; }
+
+  /* ── HIGHLIGHT BOX ── */
+  .highlight { background:#1e3a5f; border-left:4px solid #3b82f6; border-radius:0 10px 10px 0; padding:12px 16px; margin:12px 0; font-size:13px; color:#93c5fd; }
+  .highlight.red    { background:#3b0a0a; border-color:#ef4444; color:#fca5a5; }
+  .highlight.green  { background:#052e16; border-color:#22c55e; color:#86efac; }
+  .highlight.purple { background:#2e1065; border-color:#a855f7; color:#d8b4fe; }
+  .highlight.orange { background:#431407; border-color:#f97316; color:#fdba74; }
+
+  /* ── RESPONSIVE ── */
+  @media(max-width:900px) { .grid-2,.grid-3,.grid-4 { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <span style="font-size:28px">🩸</span>
+  <span class="logo">BloodCare</span>
+  <span class="sub">Full System Architecture — MERN Stack Blood Bank Portal</span>
+</nav>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="showTab('overview')">🗺 Overview</div>
+  <div class="tab" onclick="showTab('frontend')">⚛️ Frontend</div>
+  <div class="tab" onclick="showTab('backend')">🖥 Backend</div>
+  <div class="tab" onclick="showTab('database')">🗄 Database</div>
+  <div class="tab" onclick="showTab('api')">🔌 API Routes</div>
+  <div class="tab" onclick="showTab('auth')">🔐 Auth Flow</div>
+  <div class="tab" onclick="showTab('workflows')">🔄 Workflows</div>
+  <div class="tab" onclick="showTab('email')">📧 Email</div>
+  <div class="tab" onclick="showTab('security')">🛡 Security</div>
+  <div class="tab" onclick="showTab('deps')">📦 Dependencies</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- OVERVIEW -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="tab-overview" class="panel active">
+  <div class="section-title">🗺 System Architecture Overview</div>
+
+  <!-- High-level layer diagram -->
+  <div class="arch-svg-wrap" style="margin-bottom:24px;">
+    <div style="text-align:center;font-size:11px;color:#64748b;margin-bottom:20px;text-transform:uppercase;letter-spacing:1px;">Full Stack Communication Flow</div>
+
+    <!-- CLIENT LAYER -->
+    <div class="layer layer-client">
+      <div class="layer-title" style="color:#60a5fa;">🌐 Client Layer — React 18 + Vite (Port 5173)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        <span class="pill">⚛️ React 18</span>
+        <span class="pill">🎨 Tailwind CSS 4</span>
+        <span class="pill">🔀 React Router v6</span>
+        <span class="pill">🗃 Redux Toolkit</span>
+        <span class="pill">📡 Axios + Interceptor</span>
+        <span class="pill">📋 Formik + Yup</span>
+        <span class="pill">📊 Recharts</span>
+        <span class="pill">🔔 React Hot Toast</span>
+        <span class="pill">💾 localStorage (JWT)</span>
+      </div>
+    </div>
+
+    <div class="connector">⬇ HTTP/REST (JSON) — Vite Proxy → /api/v1/* ⬇</div>
+
+    <!-- SERVER LAYER -->
+    <div class="layer layer-server">
+      <div class="layer-title" style="color:#4ade80;">🖥 Server Layer — Node.js + Express (Port 8080)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        <span class="pill">🚀 Express.js 4</span>
+        <span class="pill">🔒 JWT Auth Middleware</span>
+        <span class="pill">🛡 Admin Middleware</span>
+        <span class="pill">📝 Morgan Logger</span>
+        <span class="pill">🌐 CORS</span>
+        <span class="pill">🔑 bcryptjs</span>
+        <span class="pill">📧 Nodemailer</span>
+        <span class="pill">⚙️ dotenv</span>
+      </div>
+      <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;">
+        <span class="pill" style="border-color:#22c55e;color:#86efac;">📁 authRoutes</span>
+        <span class="pill" style="border-color:#22c55e;color:#86efac;">📁 inventoryRoutes</span>
+        <span class="pill" style="border-color:#22c55e;color:#86efac;">📁 requestRoutes</span>
+        <span class="pill" style="border-color:#22c55e;color:#86efac;">📁 adminRoutes</span>
+        <span class="pill" style="border-color:#22c55e;color:#86efac;">📁 userRoutes</span>
+        <span class="pill" style="border-color:#22c55e;color:#86efac;">📁 protectedRoutes</span>
+        <span class="pill" style="border-color:#22c55e;color:#86efac;">📁 testRoutes</span>
+      </div>
+    </div>
+
+    <div class="connector">⬇ Mongoose ODM ⬇</div>
+
+    <!-- DB LAYER -->
+    <div class="layer layer-db">
+      <div class="layer-title" style="color:#c084fc;">🗄 Database Layer — MongoDB (Port 27017)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        <span class="pill" style="border-color:#a855f7;color:#d8b4fe;">👤 Users Collection</span>
+        <span class="pill" style="border-color:#a855f7;color:#d8b4fe;">🩸 Inventory Collection</span>
+        <span class="pill" style="border-color:#a855f7;color:#d8b4fe;">📋 Requests Collection</span>
+      </div>
+    </div>
+
+    <div class="connector">⬇ SMTP (Gmail) ⬇</div>
+
+    <!-- EMAIL LAYER -->
+    <div class="layer layer-email">
+      <div class="layer-title" style="color:#fb923c;">📧 Email Layer — Nodemailer + Gmail SMTP</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        <span class="pill" style="border-color:#f97316;color:#fdba74;">🩸 Donation Confirmation</span>
+        <span class="pill" style="border-color:#f97316;color:#fdba74;">🏥 Blood Issued</span>
+        <span class="pill" style="border-color:#f97316;color:#fdba74;">✅ Request Status</span>
+        <span class="pill" style="border-color:#f97316;color:#fdba74;">🔒 Password Reset</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Role Summary -->
+  <div class="section-title" style="margin-top:32px;">👥 User Roles & Capabilities</div>
+  <div class="grid-4">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#ef4444"></span>🩸 Donor</div>
+      <ul class="arch-list">
+        <li>Register / Login</li>
+        <li>View donation history</li>
+        <li>Create blood requests</li>
+        <li>Track request status</li>
+        <li>Edit profile</li>
+        <li>Change password</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#3b82f6"></span>🏢 Organisation</div>
+      <ul class="arch-list">
+        <li>Record blood donations (IN)</li>
+        <li>Issue blood to hospitals (OUT)</li>
+        <li>Manage inventory</li>
+        <li>View blood availability</li>
+        <li>Approve / reject requests</li>
+        <li>View donors &amp; hospitals</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#22c55e"></span>🏥 Hospital</div>
+      <ul class="arch-list">
+        <li>Register / Login</li>
+        <li>Create blood requests</li>
+        <li>Track request status</li>
+        <li>View request history</li>
+        <li>Edit profile</li>
+        <li>Change password</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#a855f7"></span>🛡 Admin</div>
+      <ul class="arch-list">
+        <li>View system-wide stats</li>
+        <li>List all donors</li>
+        <li>List all hospitals</li>
+        <li>List all organisations</li>
+        <li>Delete any user</li>
+        <li>Edit own profile</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Tech Stack Summary -->
+  <div class="section-title" style="margin-top:32px;">🛠 Technology Stack</div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#3b82f6"></span>Frontend Stack</div>
+      <table class="arch-table">
+        <tr><th>Technology</th><th>Version</th><th>Purpose</th></tr>
+        <tr><td>React</td><td>18.2.0</td><td>UI library</td></tr>
+        <tr><td>Vite</td><td>5.0.8</td><td>Build tool &amp; dev server</td></tr>
+        <tr><td>Tailwind CSS</td><td>4.2.2</td><td>Utility-first styling</td></tr>
+        <tr><td>React Router</td><td>6.21.1</td><td>Client-side routing</td></tr>
+        <tr><td>Redux Toolkit</td><td>2.0.1</td><td>Global state management</td></tr>
+        <tr><td>Axios</td><td>1.6.2</td><td>HTTP client</td></tr>
+        <tr><td>Formik</td><td>2.4.5</td><td>Form state management</td></tr>
+        <tr><td>Yup</td><td>1.3.3</td><td>Schema validation</td></tr>
+        <tr><td>Recharts</td><td>3.8.1</td><td>Data visualization</td></tr>
+        <tr><td>React Hot Toast</td><td>2.4.1</td><td>Toast notifications</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#22c55e"></span>Backend Stack</div>
+      <table class="arch-table">
+        <tr><th>Technology</th><th>Version</th><th>Purpose</th></tr>
+        <tr><td>Node.js</td><td>ESM</td><td>Runtime</td></tr>
+        <tr><td>Express.js</td><td>4.18.2</td><td>Web framework</td></tr>
+        <tr><td>MongoDB</td><td>—</td><td>NoSQL database</td></tr>
+        <tr><td>Mongoose</td><td>8.0.3</td><td>ODM / schema layer</td></tr>
+        <tr><td>jsonwebtoken</td><td>9.0.2</td><td>JWT auth tokens</td></tr>
+        <tr><td>bcryptjs</td><td>2.4.3</td><td>Password hashing</td></tr>
+        <tr><td>Nodemailer</td><td>—</td><td>Email sending</td></tr>
+        <tr><td>CORS</td><td>2.8.5</td><td>Cross-origin requests</td></tr>
+        <tr><td>Morgan</td><td>1.10.0</td><td>HTTP request logging</td></tr>
+        <tr><td>dotenv</td><td>16.3.1</td><td>Environment variables</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- FRONTEND -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="tab-frontend" class="panel">
+  <div class="section-title">⚛️ Frontend Architecture</div>
+
+  <!-- File Structure -->
+  <div class="grid-2" style="margin-bottom:24px;">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#3b82f6"></span>📁 Source Structure</div>
+      <pre style="font-size:12px;color:#94a3b8;line-height:1.8;overflow-x:auto;">client/src/
+├── App.jsx              ← Root router + ProtectedRoute
+├── main.jsx             ← ReactDOM.render + Redux Provider
+├── index.css            ← Global styles
+├── assets/
+│   └── BloodIllustration.jsx  ← SVG hero illustrations
+├── components/
+│   ├── Layout.jsx       ← Sidebar + header shell
+│   ├── DataTable.jsx    ← Reusable table (search, paginate, CSV)
+│   └── StatCard.jsx     ← Dashboard stat card widget
+├── pages/
+│   ├── Profile.jsx      ← Edit profile + change password
+│   ├── auth/            ← Login, Register, ForgotPwd, ResetPwd
+│   ├── donor/           ← Dashboard, History, Requests
+│   ├── hospital/        ← Dashboard, History, Requests
+│   ├── organisation/    ← Dashboard, Inventory, Donors,
+│   │                       Hospitals, Requests
+│   └── admin/           ← Dashboard, Donors, Hospitals, Orgs
+├── redux/
+│   ├── store.js         ← Redux store config
+│   └── authSlice.js     ← Auth state slice
+└── utils/
+    ├── axios.js         ← Axios instance + JWT interceptor
+    └── exportCSV.js     ← CSV export utility</pre>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#a855f7"></span>🔀 Routing Map (App.jsx)</div>
+      <table class="arch-table">
+        <tr><th>Path</th><th>Component</th><th>Access</th></tr>
+        <tr><td>/</td><td>→ /login</td><td><span class="tag tag-open">Public</span></td></tr>
+        <tr><td>/login</td><td>Login</td><td><span class="tag tag-open">Public</span></td></tr>
+        <tr><td>/register</td><td>Register</td><td><span class="tag tag-open">Public</span></td></tr>
+        <tr><td>/forgot-password</td><td>ForgotPassword</td><td><span class="tag tag-open">Public</span></td></tr>
+        <tr><td>/reset-password/:token</td><td>ResetPassword</td><td><span class="tag tag-open">Public</span></td></tr>
+        <tr><td>/donor/dashboard</td><td>DonorDashboard</td><td><span class="tag tag-auth">donor</span></td></tr>
+        <tr><td>/donor/history</td><td>DonorHistory</td><td><span class="tag tag-auth">donor</span></td></tr>
+        <tr><td>/donor/requests</td><td>DonorRequests</td><td><span class="tag tag-auth">donor</span></td></tr>
+        <tr><td>/organisation/dashboard</td><td>OrgDashboard</td><td><span class="tag tag-auth">organisation</span></td></tr>
+        <tr><td>/organisation/inventory</td><td>OrgInventory</td><td><span class="tag tag-auth">organisation</span></td></tr>
+        <tr><td>/organisation/requests</td><td>OrgRequests</td><td><span class="tag tag-auth">organisation</span></td></tr>
+        <tr><td>/organisation/donors</td><td>OrgDonors</td><td><span class="tag tag-auth">organisation</span></td></tr>
+        <tr><td>/organisation/hospitals</td><td>OrgHospitals</td><td><span class="tag tag-auth">organisation</span></td></tr>
+        <tr><td>/hospital/dashboard</td><td>HospitalDashboard</td><td><span class="tag tag-auth">hospital</span></td></tr>
+        <tr><td>/hospital/requests</td><td>HospitalRequests</td><td><span class="tag tag-auth">hospital</span></td></tr>
+        <tr><td>/hospital/history</td><td>HospitalHistory</td><td><span class="tag tag-auth">hospital</span></td></tr>
+        <tr><td>/admin/dashboard</td><td>AdminDashboard</td><td><span class="tag tag-auth">admin</span></td></tr>
+        <tr><td>/admin/donors</td><td>AdminDonors</td><td><span class="tag tag-auth">admin</span></td></tr>
+        <tr><td>/admin/hospitals</td><td>AdminHospitals</td><td><span class="tag tag-auth">admin</span></td></tr>
+        <tr><td>/admin/organisations</td><td>AdminOrganisations</td><td><span class="tag tag-auth">admin</span></td></tr>
+        <tr><td>/profile</td><td>Profile</td><td><span class="tag tag-auth">all roles</span></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Redux State -->
+  <div class="section-title">🗃 Redux State Management</div>
+  <div class="grid-2" style="margin-bottom:24px;">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#f59e0b"></span>authSlice — State Shape</div>
+      <pre style="font-size:12px;color:#94a3b8;line-height:1.8;">// Initial State (hydrated from localStorage)
+{
+  user:    Object | null,   // full user object
+  token:   String | null,   // JWT token
+  loading: Boolean,         // API in-flight
+  error:   String | null    // last error message
+}
+
+// Actions
+loginStart()              → loading=true, error=null
+loginSuccess({user,token}) → stores in state + localStorage
+loginFailure(message)     → loading=false, error=message
+logout()                  → clears state + localStorage</pre>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#3b82f6"></span>Axios Interceptor (utils/axios.js)</div>
+      <pre style="font-size:12px;color:#94a3b8;line-height:1.8;">// Base URL
+const API = axios.create({ baseURL: "/api/v1" });
+
+// Request Interceptor
+API.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Every API call automatically includes:
+// Authorization: Bearer eyJhbGciOiJIUzI1NiIs...</pre>
+    </div>
+  </div>
+
+  <!-- Components -->
+  <div class="section-title">🧩 Reusable Components</div>
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#3b82f6"></span>Layout.jsx</div>
+      <ul class="arch-list">
+        <li>Role-based sidebar navigation</li>
+        <li>Responsive (hamburger on mobile)</li>
+        <li>Displays user name + role badge</li>
+        <li>Logout button → clears Redux + localStorage</li>
+        <li>Wraps all protected pages</li>
+      </ul>
+      <div style="margin-top:10px;">
+        <div style="font-size:11px;color:#64748b;margin-bottom:6px;">Nav links per role:</div>
+        <div><span class="badge badge-red">donor</span> Dashboard, History, Requests, Profile</div>
+        <div style="margin-top:4px;"><span class="badge badge-blue">org</span> Dashboard, Inventory, Requests, Donors, Hospitals, Profile</div>
+        <div style="margin-top:4px;"><span class="badge badge-green">hospital</span> Dashboard, Requests, History, Profile</div>
+        <div style="margin-top:4px;"><span class="badge badge-purple">admin</span> Dashboard, Donors, Hospitals, Orgs, Profile</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#22c55e"></span>DataTable.jsx</div>
+      <ul class="arch-list">
+        <li>Props: columns, data, title, loading</li>
+        <li>Client-side search (all fields)</li>
+        <li>Pagination — 8 rows per page</li>
+        <li>CSV export button (exportCSV util)</li>
+        <li>Loading skeleton state</li>
+        <li>Empty state illustration</li>
+        <li>Record count display</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#f59e0b"></span>StatCard.jsx</div>
+      <ul class="arch-list">
+        <li>Props: icon, label, value, color</li>
+        <li>Color variants: red, blue, green, purple, orange</li>
+        <li>Used on all dashboard pages</li>
+        <li>Displays key metrics at a glance</li>
+      </ul>
+      <div style="margin-top:10px;font-size:11px;color:#64748b;">Used for:</div>
+      <ul class="arch-list" style="margin-top:4px;">
+        <li>Total blood donated (donor)</li>
+        <li>Blood in / out / available (org)</li>
+        <li>Total requests (hospital)</li>
+        <li>System-wide counts (admin)</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Vite Config -->
+  <div class="section-title" style="margin-top:24px;">⚙️ Vite Configuration</div>
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:#f59e0b"></span>vite.config.js — Dev Proxy</div>
+    <div class="highlight">The Vite dev server proxies all <code>/api</code> requests to <code>http://localhost:8080</code>, so the frontend at port 5173 can call the backend at port 8080 without CORS issues during development.</div>
+    <pre style="font-size:12px;color:#94a3b8;margin-top:10px;">// Proxy: /api/* → http://localhost:8080/api/*
+// This means axios baseURL "/api/v1" resolves correctly in dev</pre>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- BACKEND -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="tab-backend" class="panel">
+  <div class="section-title">🖥 Backend Architecture</div>
+
+  <!-- Server Entry -->
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-title"><span class="dot" style="background:#22c55e"></span>server.js — Entry Point</div>
+    <div class="flow" style="flex-wrap:wrap;gap:8px;">
+      <div><div class="flow-box green">dotenv.config()</div><div class="flow-label">Load .env</div></div>
+      <div class="flow-arrow">→</div>
+      <div><div class="flow-box green">connectDB()</div><div class="flow-label">MongoDB connect</div></div>
+      <div class="flow-arrow">→</div>
+      <div><div class="flow-box green">express()</div><div class="flow-label">Create app</div></div>
+      <div class="flow-arrow">→</div>
+      <div><div class="flow-box green">Middlewares</div><div class="flow-label">json, cors, morgan</div></div>
+      <div class="flow-arrow">→</div>
+      <div><div class="flow-box green">Mount Routes</div><div class="flow-label">7 route groups</div></div>
+      <div class="flow-arrow">→</div>
+      <div><div class="flow-box green">app.listen(8080)</div><div class="flow-label">Start server</div></div>
+    </div>
+  </div>
+
+  <!-- Middleware Stack -->
+  <div class="section-title">🔧 Middleware Stack</div>
+  <div class="grid-2" style="margin-bottom:24px;">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#3b82f6"></span>Global Middlewares (applied to all routes)</div>
+      <table class="arch-table">
+        <tr><th>Middleware</th><th>Purpose</th></tr>
+        <tr><td><code>express.json()</code></td><td>Parse JSON request bodies</td></tr>
+        <tr><td><code>cors()</code></td><td>Allow cross-origin requests from frontend</td></tr>
+        <tr><td><code>morgan("dev")</code></td><td>Log HTTP requests to console</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#a855f7"></span>Route-Level Middlewares</div>
+      <table class="arch-table">
+        <tr><th>Middleware</th><th>Applied To</th><th>What It Does</th></tr>
+        <tr><td><code>authMiddleware</code></td><td>All protected routes</td><td>Verifies JWT, injects userId into req.body</td></tr>
+        <tr><td><code>adminMiddleware</code></td><td>Admin routes only</td><td>Extends authMiddleware + checks role === "admin"</td></tr>
+      </table>
+      <div class="highlight" style="margin-top:12px;">
+        <strong>authMiddleware flow:</strong><br/>
+        1. Read <code>Authorization</code> header<br/>
+        2. Extract Bearer token<br/>
+        3. <code>jwt.verify(token, JWT_SECRET)</code><br/>
+        4. Inject <code>decoded.userId</code> → <code>req.body.userId</code><br/>
+        5. Call <code>next()</code> or return 401
+      </div>
+    </div>
+  </div>
+
+  <!-- Controllers -->
+  <div class="section-title">🎮 Controllers</div>
+  <div class="grid-2" style="margin-bottom:24px;">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#ef4444"></span>authController.js</div>
+      <table class="arch-table">
+        <tr><th>Function</th><th>Description</th></tr>
+        <tr><td>registerController</td><td>Validate email uniqueness → hash password (bcrypt salt=10) → save user → return user object</td></tr>
+        <tr><td>loginController</td><td>Find user by email → verify role match → compare password → sign JWT (1 day) → return token + user</td></tr>
+        <tr><td>currentUserController</td><td>Find user by userId from JWT → return user (no password)</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#3b82f6"></span>inventoryController.js</div>
+      <table class="arch-table">
+        <tr><th>Function</th><th>Description</th></tr>
+        <tr><td>createInventoryController</td><td>type=in: validate donor email + blood group match → save → send donation email. type=out: validate hospital → check stock (aggregate) → save → send issued email</td></tr>
+        <tr><td>getInventoryController</td><td>Fetch all inventory for requesting org, populate donor/hospital names</td></tr>
+        <tr><td>getBloodGroupAvailabilityController</td><td>Aggregate in-out per blood group → return availability map</td></tr>
+        <tr><td>getDonorHistoryController</td><td>Inventory records where donor=userId</td></tr>
+        <tr><td>getHospitalHistoryController</td><td>Inventory records where hospital=userId</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#22c55e"></span>requestController.js</div>
+      <table class="arch-table">
+        <tr><th>Function</th><th>Description</th></tr>
+        <tr><td>createRequestController</td><td>Validate requester + org → create Request doc with requestType=role</td></tr>
+        <tr><td>getMyRequestsController</td><td>Requests where requestedBy=userId, populate org name</td></tr>
+        <tr><td>getOrgRequestsController</td><td>Requests where organisation=userId, populate requester info</td></tr>
+        <tr><td>updateRequestStatusController</td><td>Update status → if approved: check stock → create Inventory OUT → send status email</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#a855f7"></span>adminController.js + userController.js</div>
+      <table class="arch-table">
+        <tr><th>Function</th><th>Description</th></tr>
+        <tr><td>getAllDonorsController</td><td>Users.find({role:"donor"}).select("-password")</td></tr>
+        <tr><td>getAllHospitalsController</td><td>Users.find({role:"hospital"}).select("-password")</td></tr>
+        <tr><td>getAllOrganisationsController</td><td>Users.find({role:"organisation"}).select("-password")</td></tr>
+        <tr><td>deleteUserController</td><td>Users.findByIdAndDelete(id)</td></tr>
+        <tr><td>getAdminStatsController</td><td>Count docs per role + aggregate total blood in/out</td></tr>
+        <tr><td>updateProfileController</td><td>Update allowed fields (no password)</td></tr>
+        <tr><td>changePasswordController</td><td>Verify old password → hash new → save</td></tr>
+        <tr><td>forgotPasswordController</td><td>Generate crypto token → hash → save with 1hr expiry → send reset email</td></tr>
+        <tr><td>resetPasswordController</td><td>Hash token → find user → check expiry → hash new password → clear token fields</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Environment Variables -->
+  <div class="section-title">⚙️ Environment Variables (.env)</div>
+  <div class="card">
+    <table class="arch-table">
+      <tr><th>Variable</th><th>Example Value</th><th>Used In</th></tr>
+      <tr><td>PORT</td><td>8080</td><td>server.js — app.listen()</td></tr>
+      <tr><td>DEV_MODE</td><td>development</td><td>Logging / environment flag</td></tr>
+      <tr><td>MONGO_URL</td><td>mongodb://localhost:27017/bloodcare</td><td>config/db.js — mongoose.connect()</td></tr>
+      <tr><td>JWT_SECRET</td><td>your_super_secret_key</td><td>authController (sign) + authMiddleware (verify)</td></tr>
+      <tr><td>EMAIL_USER</td><td>your@gmail.com</td><td>emailService.js — nodemailer transporter</td></tr>
+      <tr><td>EMAIL_PASS</td><td>gmail_app_password</td><td>emailService.js — nodemailer transporter</td></tr>
+      <tr><td>CLIENT_URL</td><td>http://localhost:5173</td><td>emailService.js — password reset link</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- DATABASE -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="tab-database" class="panel">
+  <div class="section-title">🗄 Database Architecture — MongoDB</div>
+
+  <!-- ER Diagram -->
+  <div class="arch-svg-wrap" style="margin-bottom:24px;">
+    <div style="text-align:center;font-size:11px;color:#64748b;margin-bottom:20px;text-transform:uppercase;letter-spacing:1px;">Entity Relationship Diagram</div>
+    <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center;align-items:flex-start;">
+
+      <!-- Users -->
+      <div style="background:#1e293b;border:2px solid #a855f7;border-radius:12px;padding:16px;min-width:260px;">
+        <div style="font-weight:800;color:#c084fc;margin-bottom:12px;font-size:14px;">👤 Users</div>
+        <table style="font-size:11px;width:100%;border-collapse:collapse;">
+          <tr><td style="color:#64748b;padding:3px 6px;">_id</td><td style="color:#fbbf24;padding:3px 6px;">ObjectId (PK)</td></tr>
+          <tr><td style="color:#64748b;padding:3px 6px;">role</td><td style="color:#e2e8f0;padding:3px 6px;">admin|organisation|donor|hospital</td></tr>
+          <tr><td style="color:#64748b;padding:3px 6px;">name</td><td style="color:#e2e8f0;padding:3px 6px;">String (donor/admin)</td></tr>
+          <tr><td style="color:#64748b;padding:3px 6px;">organisationName</td><td style="color:#e2e8f0;padding:3px 6px;">String (org only)</td></tr>
+          <tr><td style="color:#64748b;padding:3px 6px;">hospitalName</td><td style="color:#e2e8f0;padding:3px 6px;">String (hospital only)</td></tr>
+          <tr><td style="color:#64748b;padding:3px 6px;">email</td><td style="color:#e2e8f0;padding:3px 6px;">String (unique, indexed)</td></tr>
+          <tr><td style="color:#64748b;padding:3px 6px;">password</td><td style="color:#e2e8f0;padding:3px 6px;">String (bcrypt hashed)</td></tr>
+          <tr><td style="color:#64748b;padding:3px 6px;">address</td><td style="color:#e2e8f0;padding:3px 6px;">String (required)</td></tr>
+          <tr><td style="color:#64748b;padding:3px 6px;">phone</td><td style="color:#e2e8f0;padding:3px 6px;">String (required)</td></tr>
+          <tr><td style="color:#64748b;padding:3px 6px;">bloodGroup</td><td style="color:#e2e8f0;padding:3px 6px;">A+|A-|B+|B-|AB+|AB-|O+|O- (donor)</td></tr>
+          <tr><td style="color:#64748b;padding:3px 6px;">website</td><td style="color:#e2e8f0;padding:3px 6px;">String (optional)</td></tr>
+          <tr><td style="color:#64748b;padding:3px 6px;">resetPasswordToken</td><td style="color:#e2e8f0;padding:3px 6px;">String (hashed)</td></tr>
+          <tr><td style="color:#64748b;padding:3px 6px;">resetPasswordExpires</td><td style="color:#e2e8f0;padding:3px 6px;">Date (+1 hour)</td></tr>
+          <tr><td style="color:#64748b;padding:3px 6px;">createdAt / updatedAt</td><td style="color:#e2e8f0;padding:3px 6px;">Date (timestamps)</td></tr>
+        </table>
+      </div>
+
+      <div style="display:flex;flex-direction:column;justify-content:center;gap:40px;align-items:center;">
+        <div style="text-align:center;">
+          <div style="color:#64748b;font-size:11px;">1 org → many</div>
+          <div style="font-size:24px;color:#64748b;">→</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="color:#64748b;font-size:11px;">1 org → many</div>
+          <div style="font-size:24px;color:#64748b;">→</div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:20px;">
+        <!-- Inventory -->
+        <div style="background:#1e293b;border:2px solid #ef4444;border-radius:12px;padding:16px;min-width:260px;">
+          <div style="font-weight:800;color:#f87171;margin-bottom:12px;font-size:14px;">🩸 Inventory</div>
+          <table style="font-size:11px;width:100%;border-collapse:collapse;">
+            <tr><td style="color:#64748b;padding:3px 6px;">_id</td><td style="color:#fbbf24;padding:3px 6px;">ObjectId (PK)</td></tr>
+            <tr><td style="color:#64748b;padding:3px 6px;">inventoryType</td><td style="color:#e2e8f0;padding:3px 6px;">"in" | "out"</td></tr>
+            <tr><td style="color:#64748b;padding:3px 6px;">bloodGroup</td><td style="color:#e2e8f0;padding:3px 6px;">A+|A-|B+|B-|AB+|AB-|O+|O-</td></tr>
+            <tr><td style="color:#64748b;padding:3px 6px;">quantity</td><td style="color:#e2e8f0;padding:3px 6px;">Number (min: 1)</td></tr>
+            <tr><td style="color:#64748b;padding:3px 6px;">email</td><td style="color:#e2e8f0;padding:3px 6px;">String (donor/hospital email)</td></tr>
+            <tr><td style="color:#64748b;padding:3px 6px;">organisation</td><td style="color:#fbbf24;padding:3px 6px;">ObjectId → Users (required)</td></tr>
+            <tr><td style="color:#64748b;padding:3px 6px;">hospital</td><td style="color:#fbbf24;padding:3px 6px;">ObjectId → Users (nullable)</td></tr>
+            <tr><td style="color:#64748b;padding:3px 6px;">donor</td><td style="color:#fbbf24;padding:3px 6px;">ObjectId → Users (nullable)</td></tr>
+            <tr><td style="color:#64748b;padding:3px 6px;">createdAt / updatedAt</td><td style="color:#e2e8f0;padding:3px 6px;">Date (timestamps)</td></tr>
+          </table>
+        </div>
+
+        <!-- Requests -->
+        <div style="background:#1e293b;border:2px solid #22c55e;border-radius:12px;padding:16px;min-width:260px;">
+          <div style="font-weight:800;color:#4ade80;margin-bottom:12px;font-size:14px;">📋 Requests</div>
+          <table style="font-size:11px;width:100%;border-collapse:collapse;">
+            <tr><td style="color:#64748b;padding:3px 6px;">_id</td><td style="color:#fbbf24;padding:3px 6px;">ObjectId (PK)</td></tr>
+            <tr><td style="color:#64748b;padding:3px 6px;">bloodGroup</td><td style="color:#e2e8f0;padding:3px 6px;">A+|A-|B+|B-|AB+|AB-|O+|O-</td></tr>
+            <tr><td style="color:#64748b;padding:3px 6px;">quantity</td><td style="color:#e2e8f0;padding:3px 6px;">Number (min: 1)</td></tr>
+            <tr><td style="color:#64748b;padding:3px 6px;">requestType</td><td style="color:#e2e8f0;padding:3px 6px;">"donor" | "hospital"</td></tr>
+            <tr><td style="color:#64748b;padding:3px 6px;">requestedBy</td><td style="color:#fbbf24;padding:3px 6px;">ObjectId → Users (required)</td></tr>
+            <tr><td style="color:#64748b;padding:3px 6px;">organisation</td><td style="color:#fbbf24;padding:3px 6px;">ObjectId → Users (required)</td></tr>
+            <tr><td style="color:#64748b;padding:3px 6px;">status</td><td style="color:#e2e8f0;padding:3px 6px;">pending|approved|rejected</td></tr>
+            <tr><td style="color:#64748b;padding:3px 6px;">message</td><td style="color:#e2e8f0;padding:3px 6px;">String (optional note)</td></tr>
+            <tr><td style="color:#64748b;padding:3px 6px;">createdAt / updatedAt</td><td style="color:#e2e8f0;padding:3px 6px;">Date (timestamps)</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Key Queries -->
+  <div class="section-title">🔍 Key Database Queries</div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#ef4444"></span>Blood Availability Calculation</div>
+      <pre style="font-size:12px;color:#94a3b8;line-height:1.7;">// For each blood group, per organisation:
+const totalIn = await Inventory.aggregate([
+  { $match: { organisation: orgId,
+              bloodGroup: "A+",
+              inventoryType: "in" } },
+  { $group: { _id: null,
+              total: { $sum: "$quantity" } } }
+]);
+
+const totalOut = await Inventory.aggregate([
+  { $match: { organisation: orgId,
+              bloodGroup: "A+",
+              inventoryType: "out" } },
+  { $group: { _id: null,
+              total: { $sum: "$quantity" } } }
+]);
+
+available = totalIn[0]?.total - totalOut[0]?.total</pre>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#3b82f6"></span>Admin Stats Aggregation</div>
+      <pre style="font-size:12px;color:#94a3b8;line-height:1.7;">// Count users by role
+const totalDonors = await Users
+  .countDocuments({ role: "donor" });
+const totalHospitals = await Users
+  .countDocuments({ role: "hospital" });
+const totalOrganisations = await Users
+  .countDocuments({ role: "organisation" });
+
+// Total blood in/out across ALL orgs
+const totalBloodIn = await Inventory.aggregate([
+  { $match: { inventoryType: "in" } },
+  { $group: { _id: null,
+              total: { $sum: "$quantity" } } }
+]);
+
+// Net available = totalBloodIn - totalBloodOut</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- API ROUTES -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="tab-api" class="panel">
+  <div class="section-title">🔌 Complete API Reference</div>
+
+  <!-- Auth Routes -->
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title"><span class="dot" style="background:#ef4444"></span>Auth Routes — /api/v1/auth</div>
+    <table class="arch-table">
+      <tr><th>Method</th><th>Endpoint</th><th>Auth</th><th>Body / Params</th><th>Response</th></tr>
+      <tr>
+        <td><span class="tag tag-post">POST</span></td>
+        <td>/api/v1/auth/register</td>
+        <td><span class="tag tag-open">Public</span></td>
+        <td>role, name/orgName/hospitalName, email, password, address, phone, bloodGroup?, website?</td>
+        <td>201: {success, message, user}</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-post">POST</span></td>
+        <td>/api/v1/auth/login</td>
+        <td><span class="tag tag-open">Public</span></td>
+        <td>email, password, role</td>
+        <td>200: {success, message, token, user}</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-get">GET</span></td>
+        <td>/api/v1/auth/current-user</td>
+        <td><span class="tag tag-auth">JWT</span></td>
+        <td>—</td>
+        <td>200: {success, user}</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Inventory Routes -->
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title"><span class="dot" style="background:#3b82f6"></span>Inventory Routes — /api/v1/inventory</div>
+    <table class="arch-table">
+      <tr><th>Method</th><th>Endpoint</th><th>Auth</th><th>Body / Params</th><th>Response</th></tr>
+      <tr>
+        <td><span class="tag tag-post">POST</span></td>
+        <td>/api/v1/inventory/create</td>
+        <td><span class="tag tag-auth">JWT</span></td>
+        <td>inventoryType, bloodGroup, quantity, email, organisation</td>
+        <td>201: {success, message, inventory}</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-get">GET</span></td>
+        <td>/api/v1/inventory/get</td>
+        <td><span class="tag tag-auth">JWT</span></td>
+        <td>—</td>
+        <td>200: {success, inventory[]}</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-get">GET</span></td>
+        <td>/api/v1/inventory/availability</td>
+        <td><span class="tag tag-auth">JWT</span></td>
+        <td>—</td>
+        <td>200: {success, availability: {A+: N, ...}}</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-get">GET</span></td>
+        <td>/api/v1/inventory/donor-history</td>
+        <td><span class="tag tag-auth">JWT</span></td>
+        <td>—</td>
+        <td>200: {success, inventory[]}</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-get">GET</span></td>
+        <td>/api/v1/inventory/hospital-history</td>
+        <td><span class="tag tag-auth">JWT</span></td>
+        <td>—</td>
+        <td>200: {success, inventory[]}</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Request Routes -->
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title"><span class="dot" style="background:#22c55e"></span>Request Routes — /api/v1/request</div>
+    <table class="arch-table">
+      <tr><th>Method</th><th>Endpoint</th><th>Auth</th><th>Body / Params</th><th>Response</th></tr>
+      <tr>
+        <td><span class="tag tag-post">POST</span></td>
+        <td>/api/v1/request/create</td>
+        <td><span class="tag tag-auth">JWT</span></td>
+        <td>bloodGroup, quantity, organisation (ObjectId), message?</td>
+        <td>201: {success, message, request}</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-get">GET</span></td>
+        <td>/api/v1/request/my-requests</td>
+        <td><span class="tag tag-auth">JWT</span></td>
+        <td>—</td>
+        <td>200: {success, requests[]}</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-get">GET</span></td>
+        <td>/api/v1/request/org-requests</td>
+        <td><span class="tag tag-auth">JWT</span></td>
+        <td>—</td>
+        <td>200: {success, requests[]}</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-put">PUT</span></td>
+        <td>/api/v1/request/update-status/:id</td>
+        <td><span class="tag tag-auth">JWT</span></td>
+        <td>status: "approved" | "rejected"</td>
+        <td>200: {success, message, request}</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- User Routes -->
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title"><span class="dot" style="background:#f59e0b"></span>User Routes — /api/v1/user</div>
+    <table class="arch-table">
+      <tr><th>Method</th><th>Endpoint</th><th>Auth</th><th>Body / Params</th><th>Response</th></tr>
+      <tr>
+        <td><span class="tag tag-put">PUT</span></td>
+        <td>/api/v1/user/update-profile</td>
+        <td><span class="tag tag-auth">JWT</span></td>
+        <td>name/orgName/hospitalName, address, phone, website?</td>
+        <td>200: {success, user}</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-put">PUT</span></td>
+        <td>/api/v1/user/change-password</td>
+        <td><span class="tag tag-auth">JWT</span></td>
+        <td>oldPassword, newPassword</td>
+        <td>200: {success, message}</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-post">POST</span></td>
+        <td>/api/v1/user/forgot-password</td>
+        <td><span class="tag tag-open">Public</span></td>
+        <td>email</td>
+        <td>200: {success, message} (always success)</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-put">PUT</span></td>
+        <td>/api/v1/user/reset-password/:token</td>
+        <td><span class="tag tag-open">Public</span></td>
+        <td>newPassword</td>
+        <td>200: {success, message}</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Admin Routes -->
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title"><span class="dot" style="background:#a855f7"></span>Admin Routes — /api/v1/admin</div>
+    <table class="arch-table">
+      <tr><th>Method</th><th>Endpoint</th><th>Auth</th><th>Body / Params</th><th>Response</th></tr>
+      <tr>
+        <td><span class="tag tag-get">GET</span></td>
+        <td>/api/v1/admin/donors</td>
+        <td><span class="tag tag-auth">Admin JWT</span></td>
+        <td>—</td>
+        <td>200: {success, donors[]}</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-get">GET</span></td>
+        <td>/api/v1/admin/hospitals</td>
+        <td><span class="tag tag-auth">Admin JWT</span></td>
+        <td>—</td>
+        <td>200: {success, hospitals[]}</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-get">GET</span></td>
+        <td>/api/v1/admin/organisations</td>
+        <td><span class="tag tag-auth">Admin JWT</span></td>
+        <td>—</td>
+        <td>200: {success, organisations[]}</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-get">GET</span></td>
+        <td>/api/v1/admin/stats</td>
+        <td><span class="tag tag-auth">Admin JWT</span></td>
+        <td>—</td>
+        <td>200: {success, stats: {totalDonors, totalHospitals, totalOrganisations, totalBloodIn, totalBloodOut}}</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-delete">DELETE</span></td>
+        <td>/api/v1/admin/delete-user/:id</td>
+        <td><span class="tag tag-auth">Admin JWT</span></td>
+        <td>:id (userId)</td>
+        <td>200: {success, message}</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Error Responses -->
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:#ef4444"></span>Standard Error Responses</div>
+    <table class="arch-table">
+      <tr><th>Status</th><th>When</th></tr>
+      <tr><td>400</td><td>Missing required fields, validation failure</td></tr>
+      <tr><td>401</td><td>No token, invalid token, expired token</td></tr>
+      <tr><td>403</td><td>Insufficient role (admin-only route)</td></tr>
+      <tr><td>404</td><td>User/resource not found, route not found</td></tr>
+      <tr><td>409</td><td>Email already registered</td></tr>
+      <tr><td>500</td><td>Internal server error (global handler)</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- AUTH FLOW -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="tab-auth" class="panel">
+  <div class="section-title">🔐 Authentication & Authorization Flow</div>
+
+  <!-- Login Flow -->
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-title"><span class="dot" style="background:#3b82f6"></span>Login Flow — Step by Step</div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div class="flow" style="align-items:flex-start;">
+        <div style="min-width:30px;font-weight:800;color:#64748b;font-size:13px;">1</div>
+        <div class="flow-box" style="flex:1;">User fills Login form (role + email + password)</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box gray" style="flex:1;">Formik validates with Yup schema</div>
+      </div>
+      <div class="flow" style="align-items:flex-start;">
+        <div style="min-width:30px;font-weight:800;color:#64748b;font-size:13px;">2</div>
+        <div class="flow-box" style="flex:1;">dispatch(loginStart()) → loading=true</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="flex:1;">API.post("/auth/login", {role, email, password})</div>
+      </div>
+      <div class="flow" style="align-items:flex-start;">
+        <div style="min-width:30px;font-weight:800;color:#64748b;font-size:13px;">3</div>
+        <div class="flow-box green" style="flex:1;">Backend: Users.findOne({email})</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box green" style="flex:1;">Verify user.role === req.body.role</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box green" style="flex:1;">bcrypt.compare(password, user.password)</div>
+      </div>
+      <div class="flow" style="align-items:flex-start;">
+        <div style="min-width:30px;font-weight:800;color:#64748b;font-size:13px;">4</div>
+        <div class="flow-box green" style="flex:1;">jwt.sign({userId}, JWT_SECRET, {expiresIn:"1d"})</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box green" style="flex:1;">Return {token, user} (no password field)</div>
+      </div>
+      <div class="flow" style="align-items:flex-start;">
+        <div style="min-width:30px;font-weight:800;color:#64748b;font-size:13px;">5</div>
+        <div class="flow-box" style="flex:1;">dispatch(loginSuccess({user, token}))</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="flex:1;">localStorage.setItem("token") + localStorage.setItem("user")</div>
+      </div>
+      <div class="flow" style="align-items:flex-start;">
+        <div style="min-width:30px;font-weight:800;color:#64748b;font-size:13px;">6</div>
+        <div class="flow-box" style="flex:1;">navigate(roleRedirect[user.role])</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="flex:1;">e.g. /donor/dashboard, /organisation/dashboard</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JWT Middleware Flow -->
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-title"><span class="dot" style="background:#a855f7"></span>JWT Middleware — Every Protected Request</div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div class="flow">
+        <div class="flow-box" style="flex:1;">Axios interceptor reads localStorage token</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="flex:1;">Sets Authorization: Bearer {token}</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box green" style="flex:1;">HTTP request to /api/v1/...</div>
+      </div>
+      <div class="flow">
+        <div class="flow-box green" style="flex:1;">authMiddleware reads req.headers.authorization</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box green" style="flex:1;">jwt.verify(token, JWT_SECRET)</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box green" style="flex:1;">req.body.userId = decoded.userId</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box green" style="flex:1;">next() → controller</div>
+      </div>
+      <div class="highlight red">If token is missing or invalid → 401 Unauthorized. Frontend should redirect to /login.</div>
+    </div>
+  </div>
+
+  <!-- Protected Route Guard -->
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-title"><span class="dot" style="background:#22c55e"></span>Frontend Route Guard — ProtectedRoute Component</div>
+    <pre style="font-size:12px;color:#94a3b8;line-height:1.8;">const ProtectedRoute = ({ children, allowedRoles }) => {
+  const { user, token } = useSelector((state) => state.auth);
+
+  // No token or user → redirect to login
+  if (!token || !user) return &lt;Navigate to="/login" replace /&gt;;
+
+  // Wrong role → redirect to login
+  if (allowedRoles &amp;&amp; !allowedRoles.includes(user.role))
+    return &lt;Navigate to="/login" replace /&gt;;
+
+  // All good → render the page
+  return children;
+};</pre>
+  </div>
+
+  <!-- Password Reset Flow -->
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:#f59e0b"></span>Password Reset Flow</div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div class="flow">
+        <div class="flow-box" style="flex:1;">User enters email on /forgot-password</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="flex:1;">POST /api/v1/user/forgot-password</div>
+      </div>
+      <div class="flow">
+        <div class="flow-box green" style="flex:1;">Backend: find user by email</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box green" style="flex:1;">crypto.randomBytes(32) → rawToken</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box green" style="flex:1;">SHA256 hash → store in DB</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box green" style="flex:1;">expires = now + 1 hour</div>
+      </div>
+      <div class="flow">
+        <div class="flow-box orange" style="flex:1;">sendPasswordResetEmail(rawToken)</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box orange" style="flex:1;">Email: {CLIENT_URL}/reset-password/{rawToken}</div>
+      </div>
+      <div class="flow">
+        <div class="flow-box" style="flex:1;">User clicks link → /reset-password/:token</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="flex:1;">PUT /api/v1/user/reset-password/:token</td>
+      </div>
+      <div class="flow">
+        <div class="flow-box green" style="flex:1;">Backend: SHA256 hash the token param</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box green" style="flex:1;">Find user where resetPasswordToken matches AND expires &gt; now</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box green" style="flex:1;">Hash new password → save → clear token fields</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- WORKFLOWS -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="tab-workflows" class="panel">
+  <div class="section-title">🔄 Key Business Workflows</div>
+
+  <!-- Blood Donation -->
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-title"><span class="dot" style="background:#ef4444"></span>🩸 Blood Donation Workflow (Inventory IN)</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div class="flow">
+        <div class="flow-box red">Donor visits org</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">Org staff logs in</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">OrgInventory page</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">Fill form: type=IN, donor email, blood group, qty</div>
+      </div>
+      <div class="flow">
+        <div class="flow-box">POST /api/v1/inventory/create</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box green">authMiddleware (JWT)</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box green">createInventoryController</div>
+      </div>
+      <div class="flow">
+        <div class="flow-box green">Users.findOne({email, role:"donor"})</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box green">Verify donor.bloodGroup === req.bloodGroup</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box green">new Inventory({...req.body, donor: donor._id})</div>
+      </div>
+      <div class="flow">
+        <div class="flow-box green">inventory.save()</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box orange">sendDonationConfirmationEmail(donor)</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">201 response</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">Toast: "Blood donated successfully"</div>
+      </div>
+      <div class="highlight green">Donor receives email: blood group, quantity, org name, date</div>
+    </div>
+  </div>
+
+  <!-- Blood Issue -->
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-title"><span class="dot" style="background:#22c55e"></span>🏥 Blood Issue Workflow (Inventory OUT)</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div class="flow">
+        <div class="flow-box">Org staff fills form: type=OUT, hospital email, blood group, qty</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">POST /api/v1/inventory/create</div>
+      </div>
+      <div class="flow">
+        <div class="flow-box green">Users.findOne({email, role:"hospital"})</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box green">Aggregate: totalIn - totalOut for this blood group</div>
+      </div>
+      <div class="flow">
+        <div class="flow-box red">available &lt; requested qty?</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box red">400: "Only X units available"</div>
+      </div>
+      <div class="flow">
+        <div class="flow-box green">available ≥ qty</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box green">new Inventory({...req.body, hospital: hospital._id})</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box orange">sendBloodIssuedEmail(hospital)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Request Workflow -->
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-title"><span class="dot" style="background:#3b82f6"></span>📋 Blood Request Workflow (Donor/Hospital → Organisation)</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div class="flow">
+        <div class="flow-box">Donor/Hospital fills request form</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">POST /api/v1/request/create</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box green">Request saved: status="pending"</div>
+      </div>
+      <div class="flow">
+        <div class="flow-box">Org views OrgRequests page</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">GET /api/v1/request/org-requests</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box green">Sees all pending requests</div>
+      </div>
+      <div class="flow">
+        <div class="flow-box">Org clicks Approve/Reject</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">PUT /api/v1/request/update-status/:id</div>
+      </div>
+      <div class="flow">
+        <div class="flow-box red">status = "rejected"</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box orange">sendRequestStatusEmail(rejected)</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">Done</div>
+      </div>
+      <div class="flow">
+        <div class="flow-box green">status = "approved"</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box green">Check stock availability</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box green">Auto-create Inventory OUT record</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box orange">sendRequestStatusEmail(approved)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Registration -->
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:#a855f7"></span>📝 Registration Workflow</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div class="flow">
+        <div class="flow-box">User selects role on Register page</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">Form shows role-specific fields</div>
+      </div>
+      <div style="font-size:12px;color:#94a3b8;padding:8px 0;">
+        <strong style="color:#e2e8f0;">Role-specific required fields:</strong><br/>
+        🩸 Donor: name, email, password, address, phone, bloodGroup<br/>
+        🏢 Organisation: organisationName, email, password, address, phone, website?<br/>
+        🏥 Hospital: hospitalName, email, password, address, phone, website?<br/>
+        🛡 Admin: name, email, password, address, phone
+      </div>
+      <div class="flow">
+        <div class="flow-box">Formik + Yup validation</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">POST /api/v1/auth/register</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box green">Check email uniqueness</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box green">bcrypt.hash(password, 10)</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box green">user.save()</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- EMAIL -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="tab-email" class="panel">
+  <div class="section-title">📧 Email Service Architecture</div>
+
+  <div class="grid-2" style="margin-bottom:20px;">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#f97316"></span>Nodemailer Configuration</div>
+      <pre style="font-size:12px;color:#94a3b8;line-height:1.8;">// utils/emailService.js
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,  // Gmail address
+    pass: process.env.EMAIL_PASS,  // Gmail App Password
+  },
+});
+
+// Generic send wrapper
+const sendEmail = async ({ to, subject, html }) => {
+  await transporter.sendMail({
+    from: `"BloodCare Portal" &lt;${EMAIL_USER}&gt;`,
+    to, subject, html,
+  });
+  // Errors are caught and logged — never thrown
+  // Email failure does NOT break the main API flow
+};</pre>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#f97316"></span>Email Triggers</div>
+      <table class="arch-table">
+        <tr><th>Email</th><th>Triggered By</th><th>Recipient</th></tr>
+        <tr>
+          <td>🩸 Donation Confirmation</td>
+          <td>Inventory IN created</td>
+          <td>Donor</td>
+        </tr>
+        <tr>
+          <td>🏥 Blood Issued</td>
+          <td>Inventory OUT created</td>
+          <td>Hospital</td>
+        </tr>
+        <tr>
+          <td>✅/❌ Request Status</td>
+          <td>Org approves/rejects request</td>
+          <td>Requester (donor/hospital)</td>
+        </tr>
+        <tr>
+          <td>🔒 Password Reset</td>
+          <td>Forgot password submitted</td>
+          <td>User</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Email Templates -->
+  <div class="section-title">📨 Email Templates</div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#ef4444"></span>Donation Confirmation Email</div>
+      <div class="highlight red">Subject: 🩸 Thank you for your blood donation — BloodCare</div>
+      <ul class="arch-list" style="margin-top:10px;">
+        <li>Red gradient header with BloodCare branding</li>
+        <li>Personalized greeting with donor name</li>
+        <li>Details table: Blood Group, Quantity, Organisation, Date</li>
+        <li>Motivational message about saving lives</li>
+      </ul>
+      <div style="font-size:11px;color:#64748b;margin-top:8px;">Params: donorEmail, donorName, bloodGroup, quantity, orgName</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#22c55e"></span>Blood Issued Email</div>
+      <div class="highlight green">Subject: 🏥 Blood Issued Successfully — BloodCare</div>
+      <ul class="arch-list" style="margin-top:10px;">
+        <li>Green gradient header</li>
+        <li>Hospital name in greeting</li>
+        <li>Details table: Blood Group, Quantity, From Organisation, Date</li>
+      </ul>
+      <div style="font-size:11px;color:#64748b;margin-top:8px;">Params: hospitalEmail, hospitalName, bloodGroup, quantity, orgName</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#3b82f6"></span>Request Status Email</div>
+      <div class="highlight">Subject: ✅ Blood Request Approved / ❌ Blood Request Rejected</div>
+      <ul class="arch-list" style="margin-top:10px;">
+        <li>Dynamic color: green (approved) or red (rejected)</li>
+        <li>Shows blood group + quantity requested</li>
+        <li>Approved: "Organisation will arrange shortly"</li>
+        <li>Rejected: "Try another organisation"</li>
+      </ul>
+      <div style="font-size:11px;color:#64748b;margin-top:8px;">Params: email, name, status, bloodGroup, quantity</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#f59e0b"></span>Password Reset Email</div>
+      <div class="highlight orange">Subject: 🔒 Password Reset Request — BloodCare</div>
+      <ul class="arch-list" style="margin-top:10px;">
+        <li>Red gradient header</li>
+        <li>Reset button links to: {CLIENT_URL}/reset-password/{rawToken}</li>
+        <li>Expires in 1 hour warning</li>
+        <li>"If you didn't request this, ignore" disclaimer</li>
+      </ul>
+      <div style="font-size:11px;color:#64748b;margin-top:8px;">Params: email, name, resetToken (raw, unhashed)</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- SECURITY -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="tab-security" class="panel">
+  <div class="section-title">🛡 Security Architecture</div>
+
+  <div class="grid-2" style="margin-bottom:20px;">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#22c55e"></span>✅ Implemented Security Measures</div>
+      <table class="arch-table">
+        <tr><th>Measure</th><th>Implementation</th></tr>
+        <tr><td>Password Hashing</td><td>bcryptjs with salt rounds = 10</td></tr>
+        <tr><td>JWT Authentication</td><td>jsonwebtoken, 1-day expiry, HS256</td></tr>
+        <tr><td>Role-Based Access</td><td>authMiddleware + adminMiddleware on routes</td></tr>
+        <tr><td>Frontend Route Guards</td><td>ProtectedRoute checks token + role</td></tr>
+        <tr><td>Password Reset Security</td><td>SHA256 hashed token stored in DB, 1-hour expiry</td></tr>
+        <tr><td>Email Enumeration Prevention</td><td>Forgot password always returns success</td></tr>
+        <tr><td>Password Not Returned</td><td>.select("-password") on all user queries</td></tr>
+        <tr><td>CORS</td><td>cors() middleware on all routes</td></tr>
+        <tr><td>Environment Variables</td><td>All secrets in .env, not hardcoded</td></tr>
+        <tr><td>Token Storage</td><td>localStorage (token + user object)</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#ef4444"></span>⚠️ Security Gaps / Improvements</div>
+      <table class="arch-table">
+        <tr><th>Gap</th><th>Risk</th><th>Recommendation</th></tr>
+        <tr><td>No rate limiting</td><td>Brute force on /auth/login</td><td>Add express-rate-limit</td></tr>
+        <tr><td>No input sanitization</td><td>NoSQL injection, XSS</td><td>Add express-mongo-sanitize + helmet</td></tr>
+        <tr><td>No refresh tokens</td><td>Token can't be revoked</td><td>Add refresh token rotation</td></tr>
+        <tr><td>localStorage for JWT</td><td>XSS can steal token</td><td>Consider httpOnly cookies</td></tr>
+        <tr><td>No audit logging</td><td>No trail of admin actions</td><td>Add audit log collection</td></tr>
+        <tr><td>No blood expiry</td><td>Stale inventory data</td><td>Add expiry date to inventory</td></tr>
+        <tr><td>CORS open</td><td>Any origin allowed</td><td>Restrict to CLIENT_URL</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Auth Flow Security -->
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:#a855f7"></span>JWT Token Lifecycle</div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div class="flow">
+        <div class="flow-box purple">Login success</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box purple">jwt.sign({userId}, JWT_SECRET, {expiresIn:"1d"})</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box purple">Token stored in localStorage</div>
+      </div>
+      <div class="flow">
+        <div class="flow-box purple">Every API request</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box purple">Axios interceptor adds Bearer token</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box purple">authMiddleware verifies + extracts userId</div>
+      </div>
+      <div class="flow">
+        <div class="flow-box red">Token expired (after 1 day)</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box red">jwt.verify throws error</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box red">401 response</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box red">User must login again</div>
+      </div>
+      <div class="flow">
+        <div class="flow-box">Logout</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">dispatch(logout())</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">localStorage.removeItem("token") + "user"</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">navigate("/login")</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- DEPENDENCIES -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="tab-deps" class="panel">
+  <div class="section-title">📦 Complete Dependency Map</div>
+
+  <div class="grid-2" style="margin-bottom:20px;">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#22c55e"></span>Backend — package.json (BloodCare/)</div>
+      <table class="arch-table">
+        <tr><th>Package</th><th>Version</th><th>Role</th></tr>
+        <tr><td>express</td><td>^4.18.2</td><td>Web framework, routing, middleware</td></tr>
+        <tr><td>mongoose</td><td>^8.0.3</td><td>MongoDB ODM, schema validation</td></tr>
+        <tr><td>jsonwebtoken</td><td>^9.0.2</td><td>JWT sign + verify</td></tr>
+        <tr><td>bcryptjs</td><td>^2.4.3</td><td>Password hashing (salt rounds=10)</td></tr>
+        <tr><td>nodemailer</td><td>—</td><td>SMTP email via Gmail</td></tr>
+        <tr><td>dotenv</td><td>^16.3.1</td><td>Load .env into process.env</td></tr>
+        <tr><td>cors</td><td>^2.8.5</td><td>Cross-origin resource sharing</td></tr>
+        <tr><td>morgan</td><td>^1.10.0</td><td>HTTP request logger</td></tr>
+        <tr><td>colors</td><td>^1.4.0</td><td>Colored terminal output</td></tr>
+        <tr><td>concurrently</td><td>^8.2.2</td><td>Run server + client together</td></tr>
+        <tr><td colspan="3" style="color:#64748b;font-style:italic;">Dev Dependencies</td></tr>
+        <tr><td>nodemon</td><td>^3.0.2</td><td>Auto-restart on file changes</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#3b82f6"></span>Frontend — client/package.json</div>
+      <table class="arch-table">
+        <tr><th>Package</th><th>Version</th><th>Role</th></tr>
+        <tr><td>react</td><td>^18.2.0</td><td>UI component library</td></tr>
+        <tr><td>react-dom</td><td>^18.2.0</td><td>React DOM renderer</td></tr>
+        <tr><td>react-router-dom</td><td>^6.21.1</td><td>Client-side routing, Navigate, useNavigate</td></tr>
+        <tr><td>@reduxjs/toolkit</td><td>^2.0.1</td><td>Redux store, createSlice, configureStore</td></tr>
+        <tr><td>react-redux</td><td>^9.0.4</td><td>useSelector, useDispatch hooks</td></tr>
+        <tr><td>axios</td><td>^1.6.2</td><td>HTTP client with interceptors</td></tr>
+        <tr><td>formik</td><td>^2.4.5</td><td>Form state, touched, errors, handleSubmit</td></tr>
+        <tr><td>yup</td><td>^1.3.3</td><td>Schema-based form validation</td></tr>
+        <tr><td>react-hot-toast</td><td>^2.4.1</td><td>Toast notifications (success/error)</td></tr>
+        <tr><td>recharts</td><td>^3.8.1</td><td>Bar charts for blood availability</td></tr>
+        <tr><td>react-icons</td><td>^4.12.0</td><td>Icon library</td></tr>
+        <tr><td>tailwindcss</td><td>^4.2.2</td><td>Utility-first CSS framework</td></tr>
+        <tr><td>@tailwindcss/vite</td><td>^4.2.2</td><td>Tailwind Vite plugin integration</td></tr>
+        <tr><td colspan="3" style="color:#64748b;font-style:italic;">Dev Dependencies</td></tr>
+        <tr><td>vite</td><td>^5.0.8</td><td>Build tool, dev server, HMR</td></tr>
+        <tr><td>@vitejs/plugin-react</td><td>^4.2.1</td><td>React Fast Refresh for Vite</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <div class="section-title">▶️ NPM Scripts</div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#22c55e"></span>Backend Scripts (BloodCare/)</div>
+      <table class="arch-table">
+        <tr><th>Script</th><th>Command</th><th>Use</th></tr>
+        <tr><td>npm start</td><td>node server.js</td><td>Production start</td></tr>
+        <tr><td>npm run server</td><td>nodemon server.js</td><td>Dev with auto-restart</td></tr>
+        <tr><td>npm run dev</td><td>concurrently server + client</td><td>Run both together</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#3b82f6"></span>Frontend Scripts (BloodCare/client/)</div>
+      <table class="arch-table">
+        <tr><th>Script</th><th>Command</th><th>Use</th></tr>
+        <tr><td>npm run dev</td><td>vite</td><td>Dev server on port 5173</td></tr>
+        <tr><td>npm run build</td><td>vite build</td><td>Production build to dist/</td></tr>
+        <tr><td>npm run preview</td><td>vite preview</td><td>Preview production build</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- JAVASCRIPT -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<script>
+function showTab(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+
+</body>
+</html>

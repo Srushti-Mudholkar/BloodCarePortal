@@ -1,97 +1,154 @@
-import express from "express";
-import userModel from "../models/userModel.js";
-import bcrypt from 'bcryptjs';
 import Users from "../models/userModel.js";
-import dotenv from 'dotenv';
-import jwt from 'jsonwebtoken'
-import { email } from "zod";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
 
-// dot config
 dotenv.config();
 
-export const registerContrroller = async(req,res) => {
+// REGISTER
+export const registerController = async (req, res) => {
   try {
-    const existingUser = await userModel.findOne({ email:req.body.email })
-    // validation
-    if(existingUser){
-        return res.status(200).send({
-            success : false,
-            message : 'User already exists'
-        })
+    const { role, name, organisationName, hospitalName, email, password, address, phone, bloodGroup, website } = req.body;
+
+    // Check existing user
+    const existingUser = await Users.findOne({ email });
+    if (existingUser) {
+      return res.status(409).send({
+        success: false,
+        message: "User already exists with this email",
+      });
     }
-    // hashed password
+
+    // Hash password
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(req.body.password,salt);
-    req.body.password = hashedPassword;
-    // rest data
-    const user = new userModel(req.body);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const user = new Users({
+      role,
+      name,
+      organisationName,
+      hospitalName,
+      email,
+      password: hashedPassword,
+      address,
+      phone,
+      // only set bloodGroup if it has a real value (donors only)
+      ...(bloodGroup && bloodGroup !== "" && { bloodGroup }),
+      website,
+    });
+
     await user.save();
+
     return res.status(201).send({
-        success:"User Registered successfully",
-        user
-    })
-  } catch (e) {
-    console.log(e);
-    res.status(500).send({
-        success : false,
-        message : 'Error in Register API',
-        e
-    })
+      success: true,
+      message: "User registered successfully",
+      user: {
+        _id: user._id,
+        role: user.role,
+        name: user.name,
+        organisationName: user.organisationName,
+        hospitalName: user.hospitalName,
+        email: user.email,
+        address: user.address,
+        phone: user.phone,
+        bloodGroup: user.bloodGroup,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({
+      success: false,
+      message: "Error in Register API",
+      error: error.message,
+    });
   }
 };
 
-// login controller
+// LOGIN
+export const loginController = async (req, res) => {
+  try {
+    const { email, password, role } = req.body;
 
-export const loginContrroller = async(req,res) => {
-  try{
-    const user = await userModel.findOne({ email: req.body.email });
-    if(!user){
-      return res.status(404).send({
-        success : false,
-        message : 'User not found'
-      })
+    if (!email || !password || !role) {
+      return res.status(400).send({
+        success: false,
+        message: "Email, password and role are required",
+      });
     }
-    // compare password
-    const comparePassword = await bcrypt.compare(req.body.password, user.password);
-    if(!comparePassword){
-      return res.status(500).send({
-      success : false,
-      message : 'Invalid Crendentials'
-    })
-  }
-   const secretKey = process.env.JWT_SECRET; 
-    const token = jwt.sign({userId: user._id},secretKey,{expiresIn:'1d'});
+
+    const user = await Users.findOne({ email });
+    if (!user) {
+      return res.status(404).send({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (user.role !== role) {
+      return res.status(403).send({
+        success: false,
+        message: `Role mismatch. This account is registered as ${user.role}`,
+      });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).send({
+        success: false,
+        message: "Invalid credentials",
+      });
+    }
+
+    const token = jwt.sign(
+      { userId: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
     return res.status(200).send({
-      success : true,
-      message : 'Login successfully',
+      success: true,
+      message: "Login successful",
       token,
-      user
-    })
-  } catch (e){
-      console.log(e);
-      res.status(500).send({
-        success : false,
-        message: 'Error in Login API',
-        e
-      })
+      user: {
+        _id: user._id,
+        role: user.role,
+        name: user.name,
+        organisationName: user.organisationName,
+        hospitalName: user.hospitalName,
+        email: user.email,
+        address: user.address,
+        phone: user.phone,
+        bloodGroup: user.bloodGroup,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({
+      success: false,
+      message: "Error in Login API",
+      error: error.message,
+    });
   }
-}
+};
 
 // GET CURRENT USER
-export const currentUserController = async(req,res) => {
-    try {
-      const user = await userModel.findOne({email:req.body.email});
-      return res.status(200).send({
-        success : true,
-        message : 'User fetched successfully',
-        user
-      })
-    } catch (e) {
-        console.log(e);
-       return res.status(500).send({
-         success : false,
-         message : 'unable to get current user',
-         e
-       })
+export const currentUserController = async (req, res) => {
+  try {
+    const user = await Users.findById(req.body.userId).select("-password");
+    if (!user) {
+      return res.status(404).send({ success: false, message: "User not found" });
     }
-}
+    return res.status(200).send({
+      success: true,
+      message: "User fetched successfully",
+      user,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({
+      success: false,
+      message: "Unable to get current user",
+      error: error.message,
+    });
+  }
+};

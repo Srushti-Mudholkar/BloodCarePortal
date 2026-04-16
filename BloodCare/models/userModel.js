@@ -1,59 +1,65 @@
-import {Schema,model,mongoose} from "mongoose";
+import mongoose from "mongoose";
 
-export const userSchema = new mongoose.Schema({
-    role : {
-        type : String,
-        required : ['admin','oraganisation','user','hospital']
+const userSchema = new mongoose.Schema(
+  {
+    role: {
+      type: String,
+      enum: ["admin", "organisation", "donor", "hospital"],
+      required: [true, "Role is required"],
     },
-    name : {
-      type : String,
-      required : function () {
-        if(this.role === 'user' || this.role === 'admin'){
-            return true
-        }
-        return false
-      }
+    name: {
+      type: String,
+      required: function () {
+        return this.role === "donor" || this.role === "admin";
+      },
     },
-    organisationName : {
-      type : String,
-      required : function(){
-        if(this.role === 'organisation'){
-            return true;
-        }
-        return false;
-      }
+    organisationName: {
+      type: String,
+      required: function () {
+        return this.role === "organisation";
+      },
     },
-    hospitalName : {
-       type : String,
-       required : function() {
-         if(this.role === 'hospital'){
-            return true;
-         }
-         return false;
-       }
+    hospitalName: {
+      type: String,
+      required: function () {
+        return this.role === "hospital";
+      },
     },
-    email:{
-        type : String,
-        required:[true,'email is required'],
-        unique:true
+    email: {
+      type: String,
+      required: [true, "Email is required"],
+      unique: true,
+      lowercase: true,
+      trim: true,
     },
-    password : {
-        type:String,
-        required:[true,'password is required']
+    password: {
+      type: String,
+      required: [true, "Password is required"],
     },
-    website : {
-        type : String
+    website: {
+      type: String,
+      default: "",
     },
-    address : {
-        type : String,
-        required : [true,'address is required']
+    address: {
+      type: String,
+      required: [true, "Address is required"],
     },
-    phone : {
-        type : String,
-        required : [true,'phone number is required']
-    }
-},{timestamps : true}) ;
+    phone: {
+      type: String,
+      required: [true, "Phone number is required"],
+    },
+    bloodGroup: {
+      type: String,
+      enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
+      required: function () {
+        return this.role === "donor";
+      },
+    },
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
+  },
+  { timestamps: true }
+);
 
-const Users = mongoose.model('Users', userSchema);
+const Users = mongoose.model("Users", userSchema);
 export default Users;
-

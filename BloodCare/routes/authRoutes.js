@@ -1,18 +1,20 @@
-import express from 'express';
-import { registerContrroller, loginContrroller, currentUserController } from '../controllers/authController.js';
-import jwt from 'jsonwebtoken';
-import { authMiddleware } from '../middlewares/authMiddleware.js';
+import express from "express";
+import {
+  registerController,
+  loginController,
+  currentUserController,
+} from "../controllers/authController.js";
+import { authMiddleware } from "../middlewares/authMiddleware.js";
 
-const authrouter = express.Router();
+const authRouter = express.Router();
 
-// routes
-// REGISTER ROUTES POST
-authrouter.post('/register', registerContrroller);
+// POST /api/v1/auth/register
+authRouter.post("/register", registerController);
 
-// LOGIN ROUTES POST
-authrouter.post('/login', loginContrroller);
+// POST /api/v1/auth/login
+authRouter.post("/login", loginController);
 
-// GET CURRENT USER || GET
-authrouter.get('/current-user', authMiddleware, currentUserController);
+// GET /api/v1/auth/current-user
+authRouter.get("/current-user", authMiddleware, currentUserController);
 
-export default authrouter;
+export default authRouter;
