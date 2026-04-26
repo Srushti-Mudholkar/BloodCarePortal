@@ -6,19 +6,31 @@ import {
   updateRequestStatusController,
 } from "../controllers/requestController.js";
 import { authMiddleware } from "../middlewares/authMiddleware.js";
+import { validate } from "../middlewares/validateMiddleware.js";
+import { createRequestSchema, updateRequestStatusSchema } from "../validators/requestValidator.js";
 
 const requestRouter = express.Router();
 
-// POST /api/v1/request/create — donor or hospital creates a request
-requestRouter.post("/create", authMiddleware, createRequestController);
+// POST /api/v1/request/create
+// authMiddleware → validate → createRequestController
+requestRouter.post(
+  "/create",
+  authMiddleware,
+  validate(createRequestSchema),
+  createRequestController
+);
 
-// GET /api/v1/request/my-requests — donor or hospital sees their requests
+// GET routes — no body to validate
 requestRouter.get("/my-requests", authMiddleware, getMyRequestsController);
-
-// GET /api/v1/request/org-requests — organisation sees all incoming requests
 requestRouter.get("/org-requests", authMiddleware, getOrgRequestsController);
 
-// PUT /api/v1/request/update-status/:id — organisation approves or rejects
-requestRouter.put("/update-status/:id", authMiddleware, updateRequestStatusController);
+// PUT /api/v1/request/update-status/:id
+// authMiddleware → validate → updateRequestStatusController
+requestRouter.put(
+  "/update-status/:id",
+  authMiddleware,
+  validate(updateRequestStatusSchema),
+  updateRequestStatusController
+);
 
 export default requestRouter;
