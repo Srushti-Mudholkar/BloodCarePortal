@@ -43,7 +43,7 @@ export const createInventoryController = async (req, res) => {
       }
 
       // Check available blood
-      const orgId = organisation || req.body.userId;
+      const orgId = req.body.userId;
       const totalIn = await Inventory.aggregate([
         { $match: { organisation: orgId, bloodGroup, inventoryType: "in" } },
         { $group: { _id: null, total: { $sum: "$quantity" } } },

@@ -20,8 +20,8 @@ const sendEmail = async ({ to, subject, html }) => {
       html,
     });
     console.log(`Email sent to ${to}`);
-  } catch (error) {
-    console.log("Email error:", error.message);
+  } catch (e) {
+    console.log("Email error:", e.message);
     // Don't throw — email failure shouldn't break the main flow
   }
 };

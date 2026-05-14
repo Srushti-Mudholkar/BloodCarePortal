@@ -6,17 +6,21 @@ import { sendPasswordResetEmail } from "../utils/emailService.js";
 // UPDATE PROFILE
 export const updateProfileController = async (req, res) => {
   try {
-    const { name, organisationName, hospitalName, phone, address, website } = req.body;
+    const { name, organisationName, hospitalName, phone, address, website, bloodGroup } = req.body;
 
     const user = await Users.findByIdAndUpdate(
       req.body.userId,
-      { name, organisationName, hospitalName, phone, address, website },
+      { name, organisationName, hospitalName, phone, address, website, bloodGroup },
       { new: true, runValidators: false }
     ).select("-password");
 
-    return res.status(200).send({ success: true, message: "Profile updated successfully", user });
-  } catch (error) {
-    return res.status(500).send({ success: false, message: "Error updating profile", error: error.message });
+    return res.status(200).send({
+      success: true,
+      message: "Profile updated successfully",
+      user,
+    });
+  } catch (e) {
+    return res.status(500).send({ success: false, message: "Error updating profile" });
   }
 };
 
@@ -26,7 +30,9 @@ export const changePasswordController = async (req, res) => {
     const { currentPassword, newPassword } = req.body;
 
     const user = await Users.findById(req.body.userId);
-    if (!user) return res.status(404).send({ success: false, message: "User not found" });
+    if (!user) {
+      return res.status(404).send({ success: false, message: "User not found" });
+    }
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
@@ -38,8 +44,8 @@ export const changePasswordController = async (req, res) => {
     await user.save();
 
     return res.status(200).send({ success: true, message: "Password changed successfully" });
-  } catch (error) {
-    return res.status(500).send({ success: false, message: "Error changing password", error: error.message });
+  } catch (e) {
+    return res.status(500).send({ success: false, message: "Error changing password" });
   }
 };
 
@@ -47,27 +53,32 @@ export const changePasswordController = async (req, res) => {
 export const forgotPasswordController = async (req, res) => {
   try {
     const { email } = req.body;
+
     const user = await Users.findOne({ email });
 
-    // Always return success to prevent email enumeration
     if (!user) {
-      return res.status(200).send({ success: true, message: "If this email exists, a reset link has been sent." });
+      return res.status(200).send({
+        success: true,
+        message: "If this email exists, a reset link has been sent.",
+      });
     }
 
-    // Generate token
     const resetToken = crypto.randomBytes(32).toString("hex");
     const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
 
     user.resetPasswordToken = hashedToken;
-    user.resetPasswordExpires = Date.now() + 60 * 60 * 1000; // 1 hour
+    user.resetPasswordExpires = Date.now() + 60 * 60 * 1000;
     await user.save();
 
     const name = user.name || user.organisationName || user.hospitalName;
     await sendPasswordResetEmail({ email: user.email, name, resetToken });
 
-    return res.status(200).send({ success: true, message: "Password reset link sent to your email." });
-  } catch (error) {
-    return res.status(500).send({ success: false, message: "Error sending reset email", error: error.message });
+    return res.status(200).send({
+      success: true,
+      message: "Password reset link sent to your email.",
+    });
+  } catch (e) {
+    return res.status(500).send({ success: false, message: "Error sending reset email" });
   }
 };
 
@@ -94,8 +105,11 @@ export const resetPasswordController = async (req, res) => {
     user.resetPasswordExpires = undefined;
     await user.save();
 
-    return res.status(200).send({ success: true, message: "Password reset successfully. Please login." });
-  } catch (error) {
-    return res.status(500).send({ success: false, message: "Error resetting password", error: error.message });
+    return res.status(200).send({
+      success: true,
+      message: "Password reset successfully. Please login.",
+    });
+  } catch (e) {
+    return res.status(500).send({ success: false, message: "Error resetting password" });
   }
 };

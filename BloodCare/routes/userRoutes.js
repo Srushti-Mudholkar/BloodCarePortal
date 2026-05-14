@@ -5,6 +5,7 @@ import {
   forgotPasswordController,
   resetPasswordController,
 } from "../controllers/userController.js";
+
 import { authMiddleware } from "../middlewares/authMiddleware.js";
 
 const userRouter = express.Router();
