@@ -23,34 +23,61 @@ const roles = [
 ];
 
 const Login = () => {
+  // Gives us the dispatch function to send actions to Redux
+// Example: dispatch(loginStart()), dispatch(loginSuccess())
+// dispatch → only talks to REDUX store
+// API.post → talks to the backend
+
   const dispatch = useDispatch();
+ // Used to change pages after successful login
   const navigate = useNavigate();
+  // Reads data from Redux Store (Global State)
+// We only need 'loading' from auth state here
   const { loading } = useSelector((s) => s.auth);
+  // Local UI state only (not Redux)
+// Controls whether password is visible or hidden
   const [showPwd, setShowPwd] = useState(false);
 
   const formik = useFormik({
     initialValues: { role: "donor", email: "", password: "" },
+    // Frontend validation
+  // Stops invalid data before sending API request
     validationSchema: Yup.object({
       role: Yup.string().required(),
       email: Yup.string().email("Invalid email").required("Email is required"),
       password: Yup.string().min(6, "Min 6 characters").required("Password is required"),
     }),
+    // Runs only after Formik validation passes
+  // 'values' = everything user typed in the form
     onSubmit: async (values) => {
+       // Tell Redux: Login process has started
+    // Reducer will make loading = true
       dispatch(loginStart());
       try {
+          // Send form data (values) to backend
         const { data } = await API.post("/auth/login", values);
         if (data.success) {
+           // Store logged-in user & token in Redux
+        // ProtectedRoute later reads these values
           dispatch(loginSuccess({ user: data.user, token: data.token }));
+            // Get correct name according to user role
           const name = data.user.name || data.user.organisationName || data.user.hospitalName;
+           
+        // Success notification
           toast.success(`Welcome back, ${name}! 🩸`);
           navigate(roleRedirect[data.user.role]);
         } else {
+            // Store login error in Redux
           dispatch(loginFailure(data.message));
+           // Show error notification
           toast.error(data.message);
         }
       } catch (err) {
+         // Handle unexpected server/network errors
         const msg = err.response?.data?.message || "Login failed";
+        // Save error in Redux
         dispatch(loginFailure(msg));
+         // Show error notification
         toast.error(msg);
       }
     },

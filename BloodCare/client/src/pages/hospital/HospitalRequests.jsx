@@ -20,7 +20,7 @@ const HospitalRequests = () => {
 
   const fetchData = async () => {
     try {
-      const [reqRes, orgRes] = await Promise.all([API.get("/request/my-requests"), API.get("/admin/organisations")]);
+      const [reqRes, orgRes] = await Promise.all([API.get("/request/my-requests"), API.get("/inventory/organisations")]);
       if (reqRes.data.success) setRequests(reqRes.data.requests);
       if (orgRes.data.success) setOrgs(orgRes.data.organisations);
     } catch (e) { console.log(e); }
@@ -46,11 +46,11 @@ const HospitalRequests = () => {
   });
 
   const columns = [
-    { key: "bloodGroup", label: "Blood Group", render: (r) => <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">{r.bloodGroup}</span> },
+    { key: "bloodGroup", label: "Blood Group", render: (r) => <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">{r.bloodGroup}</span>, csvValue: (r) => r.bloodGroup },
     { key: "quantity", label: "Quantity (units)" },
-    { key: "organisation", label: "Organisation", render: (r) => r.organisation?.organisationName || "—" },
-    { key: "status", label: "Status", render: (r) => statusBadge(r.status) },
-    { key: "createdAt", label: "Date", render: (r) => new Date(r.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) },
+    { key: "organisation", label: "Organisation", render: (r) => r.organisation?.organisationName || "—", csvValue: (r) => r.organisation?.organisationName || "" },
+    { key: "status", label: "Status", render: (r) => statusBadge(r.status), csvValue: (r) => r.status },
+    { key: "createdAt", label: "Date", render: (r) => new Date(r.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }), csvValue: (r) => new Date(r.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) },
   ];
 
   return (

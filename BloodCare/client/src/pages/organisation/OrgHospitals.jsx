@@ -8,7 +8,7 @@ const OrgHospitals = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    API.get("/admin/hospitals")
+    API.get("/inventory/org-hospitals")
       .then(({ data }) => { if (data.success) setHospitals(data.hospitals); })
       .catch(console.log)
       .finally(() => setLoading(false));

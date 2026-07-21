@@ -9,10 +9,17 @@ export const updateProfileController = async (req, res) => {
     const { name, organisationName, hospitalName, phone, address, website, bloodGroup } = req.body;
 
     const user = await Users.findByIdAndUpdate(
-      req.body.userId,
+      req.user.userId,
       { name, organisationName, hospitalName, phone, address, website, bloodGroup },
       { new: true, runValidators: false }
     ).select("-password");
+
+    if (!user) {
+      return res.status(404).send({
+        success: false,
+        message: "User not found",
+      });
+    }
 
     return res.status(200).send({
       success: true,
@@ -29,7 +36,7 @@ export const changePasswordController = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
 
-    const user = await Users.findById(req.body.userId);
+    const user = await Users.findById(req.user.userId);
     if (!user) {
       return res.status(404).send({ success: false, message: "User not found" });
     }

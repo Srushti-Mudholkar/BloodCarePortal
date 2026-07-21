@@ -1,5 +1,6 @@
 import Inventory from "../models/inventoryModel.js";
 import Users from "../models/userModel.js";
+import mongoose from "mongoose";
 import { sendDonationConfirmationEmail, sendBloodIssuedEmail } from "../utils/emailService.js";
 
 // CREATE BLOOD INVENTORY (donation in / request out)
@@ -20,11 +21,18 @@ export const createInventoryController = async (req, res) => {
           message: `Donor blood group is ${donor.bloodGroup}, not ${bloodGroup}`,
         });
       }
-      const inventory = new Inventory({ ...req.body, donor: donor._id });
+      const inventory = new Inventory({
+        inventoryType,
+        bloodGroup,
+        quantity,
+        email,
+        donor: donor._id,
+        organisation: req.user.userId,
+      });
       await inventory.save();
 
       // Send confirmation email to donor
-      const org = await Users.findById(req.body.userId);
+      const org = await Users.findById(req.user.userId);
       await sendDonationConfirmationEmail({
         donorEmail: donor.email,
         donorName: donor.name,
@@ -43,11 +51,15 @@ export const createInventoryController = async (req, res) => {
       }
 
       // Check available blood
-      const orgId = req.body.userId;
+      const orgId = new mongoose.Types.ObjectId(req.user.userId);
+      console.log("orgId:", orgId);
+      console.log("bloodGroup:", bloodGroup);
+      
       const totalIn = await Inventory.aggregate([
         { $match: { organisation: orgId, bloodGroup, inventoryType: "in" } },
         { $group: { _id: null, total: { $sum: "$quantity" } } },
       ]);
+      console.log("totalIn:", totalIn);
       const totalOut = await Inventory.aggregate([
         { $match: { organisation: orgId, bloodGroup, inventoryType: "out" } },
         { $group: { _id: null, total: { $sum: "$quantity" } } },
@@ -61,11 +73,18 @@ export const createInventoryController = async (req, res) => {
         });
       }
 
-      const inventory = new Inventory({ ...req.body, hospital: hospital._id });
+      const inventory = new Inventory({
+        inventoryType,
+        bloodGroup,
+        quantity,
+        email,
+        hospital: hospital._id,
+        organisation: req.user.userId,
+      });
       await inventory.save();
 
       // Send confirmation email to hospital
-      const org = await Users.findById(req.body.userId);
+      const org = await Users.findById(req.user.userId);
       await sendBloodIssuedEmail({
         hospitalEmail: hospital.email,
         hospitalName: hospital.hospitalName,
@@ -85,7 +104,8 @@ export const createInventoryController = async (req, res) => {
 // GET ALL BLOOD RECORDS FOR AN ORGANISATION
 export const getInventoryController = async (req, res) => {
   try {
-    const inventory = await Inventory.find({ organisation: req.body.userId })
+   
+    const inventory = await Inventory.find({ organisation: req.user.userId })
       .populate("donor", "name email bloodGroup")
       .populate("hospital", "hospitalName email")
       .sort({ createdAt: -1 });
@@ -103,13 +123,15 @@ export const getBloodGroupAvailabilityController = async (req, res) => {
     const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
     const availability = [];
 
+    const orgObjectId = new mongoose.Types.ObjectId(req.user.userId);
+
     for (const group of bloodGroups) {
       const totalIn = await Inventory.aggregate([
-        { $match: { organisation: req.body.userId, bloodGroup: group, inventoryType: "in" } },
+        { $match: { organisation: orgObjectId, bloodGroup: group, inventoryType: "in" } },
         { $group: { _id: null, total: { $sum: "$quantity" } } },
       ]);
       const totalOut = await Inventory.aggregate([
-        { $match: { organisation: req.body.userId, bloodGroup: group, inventoryType: "out" } },
+        { $match: { organisation: orgObjectId, bloodGroup: group, inventoryType: "out" } },
         { $group: { _id: null, total: { $sum: "$quantity" } } },
       ]);
       availability.push({
@@ -128,7 +150,7 @@ export const getBloodGroupAvailabilityController = async (req, res) => {
 // GET DONATION HISTORY FOR A DONOR
 export const getDonorHistoryController = async (req, res) => {
   try {
-    const history = await Inventory.find({ donor: req.body.userId, inventoryType: "in" })
+    const history = await Inventory.find({ donor: req.user.userId, inventoryType: "in" })
       .populate("organisation", "organisationName email")
       .sort({ createdAt: -1 });
 
@@ -142,7 +164,7 @@ export const getDonorHistoryController = async (req, res) => {
 // GET HOSPITAL BLOOD REQUEST HISTORY
 export const getHospitalHistoryController = async (req, res) => {
   try {
-    const history = await Inventory.find({ hospital: req.body.userId, inventoryType: "out" })
+    const history = await Inventory.find({ hospital: req.user.userId, inventoryType: "out" })
       .populate("organisation", "organisationName email")
       .sort({ createdAt: -1 });
 
@@ -150,5 +172,65 @@ export const getHospitalHistoryController = async (req, res) => {
   } catch (error) {
     console.log(error);
     return res.status(500).send({ success: false, message: "Error fetching history", error: error.message });
+  }
+};
+
+// GET DONORS WHO HAVE DONATED TO THIS ORGANISATION
+export const getOrgDonorsController = async (req, res) => {
+  try {
+    // Find all "in" inventory records for this org, get unique donor ids
+    const records = await Inventory.find({
+      organisation: req.user.userId,
+      inventoryType: "in",
+    }).populate("donor", "name email bloodGroup phone address");
+
+    // deduplicate — one donor may have donated multiple times
+    const seen = new Set();
+    const donors = [];
+    for (const r of records) {
+      if (r.donor && !seen.has(r.donor._id.toString())) {
+        seen.add(r.donor._id.toString());
+        donors.push(r.donor);
+      }
+    }
+
+    return res.status(200).send({ success: true, message: "Donors fetched", donors });
+  } catch (error) {
+    return res.status(500).send({ success: false, message: "Error fetching donors", error: error.message });
+  }
+};
+
+// GET HOSPITALS WHO HAVE RECEIVED BLOOD FROM THIS ORGANISATION
+export const getOrgHospitalsController = async (req, res) => {
+  try {
+    // Find all "out" inventory records for this org, get unique hospital ids
+    const records = await Inventory.find({
+      organisation: req.user.userId,
+      inventoryType: "out",
+    }).populate("hospital", "hospitalName email phone address website");
+
+    // deduplicate — one hospital may have received blood multiple times
+    const seen = new Set();
+    const hospitals = [];
+    for (const r of records) {
+      if (r.hospital && !seen.has(r.hospital._id.toString())) {
+        seen.add(r.hospital._id.toString());
+        hospitals.push(r.hospital);
+      }
+    }
+
+    return res.status(200).send({ success: true, message: "Hospitals fetched", hospitals });
+  } catch (error) {
+    return res.status(500).send({ success: false, message: "Error fetching hospitals", error: error.message });
+  }
+};
+
+// GET ALL ORGANISATIONS — for donor/hospital request form dropdown
+export const getOrganisationsListController = async (req, res) => {
+  try {
+    const organisations = await Users.find({ role: "organisation" }).select("-password").sort({ createdAt: -1 });
+    return res.status(200).send({ success: true, message: "Organisations fetched", organisations });
+  } catch (error) {
+    return res.status(500).send({ success: false, message: "Error fetching organisations", error: error.message });
   }
 };

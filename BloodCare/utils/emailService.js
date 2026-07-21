@@ -113,6 +113,33 @@ export const sendRequestStatusEmail = async ({ email, name, status, bloodGroup, 
   });
 };
 
+export const sendVerificationEmail = async ({ email, name, verificationToken }) => {
+  const verifyUrl = `${process.env.CLIENT_URL || "http://localhost:5173"}/verify-email/${verificationToken}`;
+  await sendEmail({
+    to: email,
+    subject: "✅ Verify your email — BloodCare",
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #eee;">
+        <div style="background:linear-gradient(135deg,#dc2626,#ef4444);padding:32px;text-align:center;">
+          <h1 style="color:#fff;margin:0;font-size:28px;">🩸 BloodCare</h1>
+          <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;">Email Verification</p>
+        </div>
+        <div style="padding:32px;">
+          <h2 style="color:#1f2937;margin-top:0;">Hello, ${name}!</h2>
+          <p style="color:#6b7280;line-height:1.6;">Thank you for registering. Please verify your email address to activate your account.</p>
+          <div style="text-align:center;margin:32px 0;">
+            <a href="${verifyUrl}" style="background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:bold;font-size:16px;">Verify Email</a>
+          </div>
+          <p style="color:#9ca3af;font-size:13px;">If you didn't create an account, ignore this email.</p>
+        </div>
+        <div style="background:#f9fafb;padding:20px;text-align:center;border-top:1px solid #eee;">
+          <p style="color:#9ca3af;font-size:12px;margin:0;">BloodCare Portal — Saving Lives Together</p>
+        </div>
+      </div>
+    `,
+  });
+};
+
 export const sendPasswordResetEmail = async ({ email, name, resetToken }) => {
   const resetUrl = `${process.env.CLIENT_URL || "http://localhost:5173"}/reset-password/${resetToken}`;
   await sendEmail({

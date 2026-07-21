@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const requestSchema = new mongoose.Schema(
   {
-    bloodGroup: {
+    bloodGroup: { // Stores which blood group is being requested.
       type: String,
       enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
       required: [true, "Blood group is required"],
@@ -17,12 +17,12 @@ const requestSchema = new mongoose.Schema(
       enum: ["donor", "hospital"], // who is requesting
       required: true,
     },
-    requestedBy: {
+    requestedBy: {// Stores who is making the request actual id
       type: mongoose.Schema.Types.ObjectId,
       ref: "Users",
       required: true,
     },
-    organisation: {
+    organisation: {//  Stores to whom the request was sent.
       type: mongoose.Schema.Types.ObjectId,
       ref: "Users",
       required: true,

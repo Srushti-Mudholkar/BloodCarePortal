@@ -22,7 +22,7 @@ export const authMiddleware = async (req, res, next) => {
           message: "Invalid or expired token. Auth Failed.",
         });
       }
-      req.body.userId = decoded.userId;
+      req.user = decoded;
       next();
     });
   } catch (error) {
@@ -49,7 +49,7 @@ export const adminMiddleware = async (req, res, next) => {
       if (decoded.role !== "admin") {
         return res.status(403).send({ success: false, message: "Access denied. Admins only." });
       }
-      req.body.userId = decoded.userId;
+      req.user = decoded;
       next();
     });
   } catch (error) {

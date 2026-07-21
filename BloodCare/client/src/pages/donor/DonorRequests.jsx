@@ -5,8 +5,7 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import API from "../../utils/axios.js";
 import toast from "react-hot-toast";
-
-const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+import { useSelector } from "react-redux";
 
 const statusBadge = (status) => {
   const map = {
@@ -18,6 +17,7 @@ const statusBadge = (status) => {
 };
 
 const DonorRequests = () => {
+  const { user } = useSelector((s) => s.auth); // ← get logged-in donor from Redux
   const [requests, setRequests] = useState([]);
   const [orgs, setOrgs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,7 +26,7 @@ const DonorRequests = () => {
     try {
       const [reqRes, orgRes] = await Promise.all([
         API.get("/request/my-requests"),
-        API.get("/admin/organisations"),
+        API.get("/inventory/organisations"),
       ]);
       if (reqRes.data.success) setRequests(reqRes.data.requests);
       if (orgRes.data.success) setOrgs(orgRes.data.organisations);
@@ -34,12 +34,12 @@ const DonorRequests = () => {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); }, []); // ← this empty array means "run ONCE only, when page first loads"
 
   const formik = useFormik({
-    initialValues: { bloodGroup: "", quantity: "", organisation: "", message: "" },
+    initialValues: { bloodGroup: user?.bloodGroup || "", quantity: "", organisation: "", message: "" },
     validationSchema: Yup.object({
-      bloodGroup: Yup.string().required("Blood group is required"),
+      // bloodGroup is auto-filled from profile — no need to validate
       quantity: Yup.number().min(1).required("Quantity is required"),
       organisation: Yup.string().required("Select an organisation"),
     }),
@@ -56,12 +56,12 @@ const DonorRequests = () => {
   });
 
   const columns = [
-    { key: "bloodGroup", label: "Blood Group", render: (r) => <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">{r.bloodGroup}</span> },
+    { key: "bloodGroup", label: "Blood Group", render: (r) => <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">{r.bloodGroup}</span>, csvValue: (r) => r.bloodGroup },
     { key: "quantity", label: "Quantity (units)" },
-    { key: "organisation", label: "Organisation", render: (r) => r.organisation?.organisationName || "—" },
-    { key: "status", label: "Status", render: (r) => statusBadge(r.status) },
+    { key: "organisation", label: "Organisation", render: (r) => r.organisation?.organisationName || "—", csvValue: (r) => r.organisation?.organisationName || "" },
+    { key: "status", label: "Status", render: (r) => statusBadge(r.status), csvValue: (r) => r.status },
     { key: "message", label: "Note", render: (r) => r.message || "—" },
-    { key: "createdAt", label: "Date", render: (r) => new Date(r.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) },
+    { key: "createdAt", label: "Date", render: (r) => new Date(r.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }), csvValue: (r) => new Date(r.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) },
   ];
 
   return (
@@ -76,20 +76,14 @@ const DonorRequests = () => {
         <h3 className="font-bold text-gray-800 text-lg mb-5">New Request</h3>
         <form onSubmit={formik.handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Blood Group */}
+            {/* Blood Group — locked to donor's registered group */}
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Blood Group</label>
-              <div className="grid grid-cols-4 gap-1.5">
-                {bloodGroups.map((bg) => (
-                  <button type="button" key={bg}
-                    onClick={() => formik.setFieldValue("bloodGroup", bg)}
-                    className={`py-2 rounded-xl border-2 text-xs font-bold transition-all
-                      ${formik.values.bloodGroup === bg ? "border-red-500 bg-red-600 text-white" : "border-gray-200 text-gray-600 hover:border-red-300"}`}>
-                    {bg}
-                  </button>
-                ))}
+              <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl border-2 border-red-200 bg-red-50 w-fit">
+                <span className="text-lg font-extrabold text-red-600">{user?.bloodGroup}</span>
+                <span className="text-xs text-red-400 font-medium">Your registered blood group</span>
               </div>
-              {formik.touched.bloodGroup && formik.errors.bloodGroup && <p className="text-red-500 text-xs mt-1">{formik.errors.bloodGroup}</p>}
+              <p className="text-gray-400 text-xs mt-1.5">You can only donate your registered blood group</p>
             </div>
 
             <div className="space-y-4">

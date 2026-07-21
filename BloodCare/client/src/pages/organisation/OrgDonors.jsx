@@ -8,7 +8,7 @@ const OrgDonors = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    API.get("/admin/donors")
+    API.get("/inventory/org-donors")
       .then(({ data }) => { if (data.success) setDonors(data.donors); })
       .catch(console.log)
       .finally(() => setLoading(false));
@@ -17,7 +17,7 @@ const OrgDonors = () => {
   const columns = [
     { key: "name", label: "Name" },
     { key: "email", label: "Email" },
-    { key: "bloodGroup", label: "Blood Group", render: (r) => <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">{r.bloodGroup}</span> },
+    { key: "bloodGroup", label: "Blood Group", render: (r) => <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">{r.bloodGroup}</span>, csvValue: (r) => r.bloodGroup },
     { key: "phone", label: "Phone" },
     { key: "address", label: "Address" },
   ];

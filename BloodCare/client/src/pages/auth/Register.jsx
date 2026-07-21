@@ -65,7 +65,7 @@ const Register = () => {
       try {
         const { data } = await API.post("/auth/register", values);
         if (data.success) {
-          toast.success("Account created! Please login.");
+          toast.success("Account created! Please check your email to verify your account.");
           navigate("/login");
         } else {
           toast.error(data.message);

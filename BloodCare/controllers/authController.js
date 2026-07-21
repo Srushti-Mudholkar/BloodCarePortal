@@ -1,7 +1,9 @@
 import Users from "../models/userModel.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import dotenv from "dotenv";
+import { sendVerificationEmail } from "../utils/emailService.js";
 
 dotenv.config();
 
@@ -23,6 +25,9 @@ export const registerController = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    // Generate email verification token
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+
     const user = new Users({
       role,
       name,
@@ -32,12 +37,20 @@ export const registerController = async (req, res) => {
       password: hashedPassword,
       address,
       phone,
+      website,
+      verificationToken,
       // only set bloodGroup if it has a real value (donors only)
       ...(bloodGroup && bloodGroup !== "" && { bloodGroup }),
-      website,
     });
 
     await user.save();
+
+    // Send verification email — don't block registration if email fails
+    await sendVerificationEmail({
+      email: user.email,
+      name: user.name || user.organisationName || user.hospitalName,
+      verificationToken,
+    });
 
     return res.status(201).send({
       success: true,
@@ -99,6 +112,14 @@ export const loginController = async (req, res) => {
       });
     }
 
+    // Block login if email not verified
+    if (!user.isVerified) {
+      return res.status(403).send({
+        success: false,
+        message: "Please verify your email before logging in. Check your inbox.",
+      });
+    }
+
     const token = jwt.sign(
       { userId: user._id, role: user.role },
       process.env.JWT_SECRET,
@@ -134,7 +155,7 @@ export const loginController = async (req, res) => {
 // GET CURRENT USER
 export const currentUserController = async (req, res) => {
   try {
-    const user = await Users.findById(req.body.userId).select("-password");
+    const user = await Users.findById(req.user.userId).select("-password");
     if (!user) {
       return res.status(404).send({ success: false, message: "User not found" });
     }
@@ -152,3 +173,43 @@ export const currentUserController = async (req, res) => {
     });
   }
 };
+
+export const verifyEmailController = async(req,res)=>{
+    try{
+        const {token} = req.params;
+
+        const user = await Users.findOne({
+            verificationToken: token
+        });
+
+        if(!user){
+            return res.status(400).send({
+                success:false,
+                message:"Invalid verification link"
+            });
+        }
+
+        user.isVerified = true;
+        user.verificationToken = undefined;
+
+        await user.save();
+
+
+        return res.status(200).send({
+            success:true,
+            message:"Email verified successfully"
+        });
+
+
+    }catch(e){
+
+        console.log(e);
+
+        return res.status(500).send({
+            success:false,
+            message:"Verification failed"
+        });
+    }
+};
+
+

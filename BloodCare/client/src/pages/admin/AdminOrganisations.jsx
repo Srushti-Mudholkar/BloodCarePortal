@@ -31,7 +31,7 @@ const AdminOrganisations = () => {
     { key: "email", label: "Email" },
     { key: "phone", label: "Phone" },
     { key: "address", label: "Address" },
-    { key: "website", label: "Website", render: (r) => r.website ? <a href={r.website} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-xs">{r.website}</a> : "—" },
+    { key: "website", label: "Website", render: (r) => r.website ? <a href={r.website} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-xs">{r.website}</a> : "—", csvValue: (r) => r.website || "" },
     {
       key: "action", label: "Action",
       render: (r) => (

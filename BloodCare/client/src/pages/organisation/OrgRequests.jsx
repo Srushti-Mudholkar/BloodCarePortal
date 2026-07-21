@@ -38,13 +38,13 @@ const OrgRequests = () => {
   const others = requests.filter((r) => r.status !== "pending");
 
   const columns = [
-    { key: "requestType", label: "From", render: (r) => <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold capitalize ${r.requestType === "donor" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}`}>{r.requestType}</span> },
-    { key: "requestedBy", label: "Name", render: (r) => r.requestedBy?.name || r.requestedBy?.hospitalName || "—" },
-    { key: "email", label: "Email", render: (r) => r.requestedBy?.email || "—" },
-    { key: "bloodGroup", label: "Blood Group", render: (r) => <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">{r.bloodGroup}</span> },
+    { key: "requestType", label: "From", render: (r) => <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold capitalize ${r.requestType === "donor" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}`}>{r.requestType}</span>, csvValue: (r) => r.requestType },
+    { key: "requestedBy", label: "Name", render: (r) => r.requestedBy?.name || r.requestedBy?.hospitalName || "—", csvValue: (r) => r.requestedBy?.name || r.requestedBy?.hospitalName || "" },
+    { key: "email", label: "Email", render: (r) => r.requestedBy?.email || "—", csvValue: (r) => r.requestedBy?.email || "" },
+    { key: "bloodGroup", label: "Blood Group", render: (r) => <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">{r.bloodGroup}</span>, csvValue: (r) => r.bloodGroup },
     { key: "quantity", label: "Qty (units)" },
     { key: "message", label: "Note", render: (r) => r.message || "—" },
-    { key: "status", label: "Status", render: (r) => statusBadge(r.status) },
+    { key: "status", label: "Status", render: (r) => statusBadge(r.status), csvValue: (r) => r.status },
     {
       key: "action", label: "Action",
       render: (r) => r.status === "pending" ? (

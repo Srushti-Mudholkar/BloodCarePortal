@@ -55,15 +55,17 @@ const OrgInventory = () => {
           {r.inventoryType === "in" ? "⬆ Blood In" : "⬇ Blood Out"}
         </span>
       ),
+      csvValue: (r) => r.inventoryType === "in" ? "Blood In" : "Blood Out",
     },
-    { key: "bloodGroup", label: "Blood Group", render: (r) => <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">{r.bloodGroup}</span> },
+    { key: "bloodGroup", label: "Blood Group", render: (r) => <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">{r.bloodGroup}</span>, csvValue: (r) => r.bloodGroup },
     { key: "quantity", label: "Quantity (units)" },
     { key: "email", label: "Email" },
     {
       key: "person", label: "Donor / Hospital",
       render: (r) => r.inventoryType === "in" ? (r.donor?.name || "—") : (r.hospital?.hospitalName || "—"),
+      csvValue: (r) => r.inventoryType === "in" ? (r.donor?.name || "") : (r.hospital?.hospitalName || ""),
     },
-    { key: "createdAt", label: "Date", render: (r) => new Date(r.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) },
+    { key: "createdAt", label: "Date", render: (r) => new Date(r.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }), csvValue: (r) => new Date(r.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) },
   ];
 
   return (
