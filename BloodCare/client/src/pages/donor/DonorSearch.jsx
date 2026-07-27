@@ -214,18 +214,12 @@ const DonorSearch = () => {
             <p className="text-sm text-gray-500 mb-5">Sending request to <span className="font-semibold text-gray-700">{selectedDonor?.name}</span></p>
 
             <div className="space-y-4">
-              {/* Blood Group */}
+              {/* Blood Group — locked to target donor's group */}
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Blood Group Needed</label>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((bg) => (
-                    <button type="button" key={bg}
-                      onClick={() => setFormData({ ...formData, bloodGroup: bg })}
-                      className={`py-2 rounded-xl border-2 text-xs font-bold transition-all
-                        ${formData.bloodGroup === bg ? "border-red-500 bg-red-600 text-white" : "border-gray-200 text-gray-600 hover:border-red-300"}`}>
-                      {bg}
-                    </button>
-                  ))}
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Blood Group</label>
+                <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl border-2 border-red-200 bg-red-50 w-fit">
+                  <span className="text-lg font-extrabold text-red-600">{formData.bloodGroup}</span>
+                  <span className="text-xs text-red-400 font-medium">Donor's registered blood group</span>
                 </div>
               </div>
 

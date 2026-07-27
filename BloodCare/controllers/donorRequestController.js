@@ -17,6 +17,11 @@ export const createDonorRequestController = async (req, res) => {
       return res.status(404).send({ success: false, message: "Donor not found" });
     }
 
+    // Blood group must match the target donor's registered group
+    if (target.bloodGroup !== bloodGroup) {
+      return res.status(400).send({ success: false, message: `This donor can only donate ${target.bloodGroup}` });
+    }
+
     const request = new DonorRequest({
       bloodGroup,
       quantity,

@@ -45,21 +45,26 @@ export const createInventoryController = async (req, res) => {
     }
 
     if (inventoryType === "out") {
-      const hospital = await Users.findOne({ email, role: "hospital" });
-      if (!hospital) {
-        return res.status(404).send({ success: false, message: "Hospital not found with this email" });
+      // Blood out can go to a hospital OR a donor (donor-need case)
+      let recipient = await Users.findOne({ email, role: "hospital" });
+      let recipientType = "hospital";
+
+      if (!recipient) {
+        recipient = await Users.findOne({ email, role: "donor" });
+        recipientType = "donor";
+      }
+
+      if (!recipient) {
+        return res.status(404).send({ success: false, message: "No hospital or donor found with this email" });
       }
 
       // Check available blood
       const orgId = new mongoose.Types.ObjectId(req.user.userId);
-      console.log("orgId:", orgId);
-      console.log("bloodGroup:", bloodGroup);
       
       const totalIn = await Inventory.aggregate([
         { $match: { organisation: orgId, bloodGroup, inventoryType: "in" } },
         { $group: { _id: null, total: { $sum: "$quantity" } } },
       ]);
-      console.log("totalIn:", totalIn);
       const totalOut = await Inventory.aggregate([
         { $match: { organisation: orgId, bloodGroup, inventoryType: "out" } },
         { $group: { _id: null, total: { $sum: "$quantity" } } },
@@ -78,20 +83,23 @@ export const createInventoryController = async (req, res) => {
         bloodGroup,
         quantity,
         email,
-        hospital: hospital._id,
+        hospital: recipientType === "hospital" ? recipient._id : null,
+        donor: recipientType === "donor" ? recipient._id : null,
         organisation: req.user.userId,
       });
       await inventory.save();
 
-      // Send confirmation email to hospital
+      // Send confirmation email
       const org = await Users.findById(req.user.userId);
-      await sendBloodIssuedEmail({
-        hospitalEmail: hospital.email,
-        hospitalName: hospital.hospitalName,
-        bloodGroup,
-        quantity,
-        orgName: org?.organisationName || "BloodCare Organisation",
-      });
+      if (recipientType === "hospital") {
+        await sendBloodIssuedEmail({
+          hospitalEmail: recipient.email,
+          hospitalName: recipient.hospitalName,
+          bloodGroup,
+          quantity,
+          orgName: org?.organisationName || "BloodCare Organisation",
+        });
+      }
 
       return res.status(201).send({ success: true, message: "Blood issued successfully", inventory });
     }
