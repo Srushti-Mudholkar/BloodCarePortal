@@ -10,6 +10,9 @@ import DonorDashboard from "./pages/donor/DonorDashboard.jsx";
 import DonorHistory from "./pages/donor/DonorHistory.jsx";
 import DonorRequests from "./pages/donor/DonorRequests.jsx";
 
+import NeedBlood from "./pages/donor/NeedBlood.jsx";
+import DonorSearch from "./pages/donor/DonorSearch.jsx";
+
 import OrgDashboard from "./pages/organisation/OrgDashboard.jsx";
 import OrgInventory from "./pages/organisation/OrgInventory.jsx";
 import OrgDonors from "./pages/organisation/OrgDonors.jsx";
@@ -56,6 +59,8 @@ function App() {
         <Route path="/donor/dashboard" element={<ProtectedRoute allowedRoles={["donor"]}><DonorDashboard /></ProtectedRoute>} />
         <Route path="/donor/history" element={<ProtectedRoute allowedRoles={["donor"]}><DonorHistory /></ProtectedRoute>} />
         <Route path="/donor/requests" element={<ProtectedRoute allowedRoles={["donor"]}><DonorRequests /></ProtectedRoute>} />
+        <Route path="/donor/need-blood" element={<ProtectedRoute allowedRoles={["donor"]}><NeedBlood /></ProtectedRoute>} />
+        <Route path="/donor/find-donors" element={<ProtectedRoute allowedRoles={["donor"]}><DonorSearch /></ProtectedRoute>} />
 
         {/* Organisation */}
         <Route path="/organisation/dashboard" element={<ProtectedRoute allowedRoles={["organisation"]}><OrgDashboard /></ProtectedRoute>} />

@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
 
-const requestSchema = new mongoose.Schema(
+const donorRequestSchema = new mongoose.Schema(
   {
-    bloodGroup: { // Stores which blood group is being requested.
+    bloodGroup: {
       type: String,
       enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
       required: [true, "Blood group is required"],
@@ -12,33 +12,28 @@ const requestSchema = new mongoose.Schema(
       required: [true, "Quantity is required"],
       min: [1, "Minimum 1 unit"],
     },
-    requestType: {
+    message: {
       type: String,
-      enum: ["donor", "hospital", "donor-need"], // who is requesting
-      required: true,
+      default: "",
     },
-    requestedBy: {// Stores who is making the request actual id
+    requestedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Users",
       required: true,
     },
-    organisation: {//  Stores to whom the request was sent.
+    targetDonor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Users",
       required: true,
     },
     status: {
       type: String,
-      enum: ["pending", "approved", "rejected"],
+      enum: ["pending", "accepted", "rejected"],
       default: "pending",
-    },
-    message: {
-      type: String,
-      default: "",
     },
   },
   { timestamps: true }
 );
 
-const Request = mongoose.model("Request", requestSchema);
-export default Request;
+const DonorRequest = mongoose.model("DonorRequest", donorRequestSchema);
+export default DonorRequest;

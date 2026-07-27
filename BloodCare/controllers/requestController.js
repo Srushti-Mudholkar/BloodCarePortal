@@ -6,15 +6,18 @@ import { sendRequestStatusEmail } from "../utils/emailService.js";
 // CREATE REQUEST
 export const createRequestController = async (req, res) => {
   try {
-    const { bloodGroup, quantity, organisation, message } = req.body;
+    const { bloodGroup, quantity, organisation, message, requestType } = req.body;
 
     const requester = await Users.findById(req.user.userId);
     if (!requester) {
       return res.status(404).send({ success: false, message: "User not found" });
     }
 
-    if(requester.role === "donor" && requester.bloodGroup !== bloodGroup){
-       return res.status(400).send({ success: false, message: 'You can only raise a request with registered blood Group' });
+    // For donation requests (donor giving blood), blood group must match their profile
+    // For "donor-need" requests (donor needing blood), any blood group is allowed
+    const type = requestType || requester.role; // frontend sends "donor-need" explicitly
+    if (type === "donor" && requester.bloodGroup !== bloodGroup) {
+      return res.status(400).send({ success: false, message: "You can only raise a donation request with your registered blood group" });
     }
 
     const org = await Users.findById(organisation);
@@ -26,7 +29,7 @@ export const createRequestController = async (req, res) => {
       bloodGroup,
       quantity,
       message,
-      requestType: requester.role,
+      requestType: type,
       requestedBy: requester._id,
       organisation: org._id,
     });
@@ -83,10 +86,10 @@ export const updateRequestStatusController = async (req, res) => {
 
     if (status === "approved") {
       // donor request = blood coming IN (donation)
-      // hospital request = blood going OUT (issued to hospital)
+      // hospital/donor-need request = blood going OUT (issued)
       const inventoryType = request.requestType === "donor" ? "in" : "out";
 
-      // Only check available stock for hospital requests (blood going out)
+      // Only check available stock for outgoing blood (hospital + donor-need)
       if (inventoryType === "out") {
         const totalIn = await Inventory.aggregate([
           { $match: { organisation: request.organisation._id, bloodGroup: request.bloodGroup, inventoryType: "in" } },
@@ -113,7 +116,7 @@ export const updateRequestStatusController = async (req, res) => {
         email: request.requestedBy.email,
         organisation: request.organisation._id,
         hospital: request.requestType === "hospital" ? request.requestedBy._id : null,
-        donor: request.requestType === "donor" ? request.requestedBy._id : null,
+        donor: (request.requestType === "donor" || request.requestType === "donor-need") ? request.requestedBy._id : null,
       });
       await inventory.save();
     }

@@ -11,6 +11,7 @@ import testRouter from "./routes/testRoutes.js";
 import protectedRouter from "./routes/protectedRoutes.js";
 import requestRouter from "./routes/requestRoutes.js";
 import userRouter from "./routes/userRoutes.js";
+import donorRequestRouter from "./routes/donorRequestRoutes.js";
 
 // Load env vars
 dotenv.config();
@@ -33,6 +34,7 @@ app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/protected", protectedRouter);
 app.use("/api/v1/request", requestRouter);
 app.use("/api/v1/user", userRouter);
+app.use("/api/v1/donor-request", donorRequestRouter);
 
 // 404 handler
 app.use((req, res) => {
