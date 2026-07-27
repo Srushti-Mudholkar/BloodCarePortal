@@ -73,3 +73,18 @@ export const getAdminStatsController = async (req, res) => {
     return res.status(500).send({ success: false, message: "Error fetching stats", error: error.message });
   }
 };
+
+// GET ALL INVENTORY — full inventory records for admin view
+export const getAdminInventoryController = async (req, res) => {
+  try {
+    const inventory = await Inventory.find()
+      .populate("organisation", "organisationName email")
+      .populate("donor", "name email bloodGroup phone")
+      .populate("hospital", "hospitalName email phone")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).send({ success: true, message: "Inventory fetched", inventory });
+  } catch (error) {
+    return res.status(500).send({ success: false, message: "Error fetching inventory", error: error.message });
+  }
+};

@@ -32,6 +32,7 @@ const navLinks = {
     { to: "/admin/donors",        label: "Donors",        icon: "👤" },
     { to: "/admin/hospitals",     label: "Hospitals",     icon: "🏥" },
     { to: "/admin/organisations", label: "Organisations", icon: "🏢" },
+    { to: "/admin/inventory",     label: "Inventory",     icon: "🩸" },
     { to: "/profile",             label: "My Profile",    icon: "⚙️" },
   ],
 };

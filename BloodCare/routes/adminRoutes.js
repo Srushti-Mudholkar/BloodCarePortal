@@ -5,6 +5,7 @@ import {
   getAllOrganisationsController,
   deleteUserController,
   getAdminStatsController,
+  getAdminInventoryController,
 } from "../controllers/adminController.js";
 import { adminMiddleware } from "../middlewares/authMiddleware.js";
 
@@ -24,5 +25,8 @@ adminRouter.delete("/delete-user/:id", adminMiddleware, deleteUserController);
 
 // GET /api/v1/admin/stats
 adminRouter.get("/stats", adminMiddleware, getAdminStatsController);
+
+// GET /api/v1/admin/inventory — all inventory across all orgs
+adminRouter.get("/inventory", adminMiddleware, getAdminInventoryController);
 
 export default adminRouter;
