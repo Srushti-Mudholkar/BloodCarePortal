@@ -28,6 +28,7 @@ import AdminDonors from "./pages/admin/AdminDonors.jsx";
 import AdminHospitals from "./pages/admin/AdminHospitals.jsx";
 import AdminOrganisations from "./pages/admin/AdminOrganisations.jsx";
 import AdminInventory from "./pages/admin/AdminInventory.jsx";
+import AdminOrgBreakdown from "./pages/admin/AdminOrgBreakdown.jsx";
 
 import Profile from "./pages/Profile.jsx";
 import ForgotPassword from "./pages/auth/ForgotPassword.jsx";
@@ -81,6 +82,7 @@ function App() {
         <Route path="/admin/hospitals" element={<ProtectedRoute allowedRoles={["admin"]}><AdminHospitals /></ProtectedRoute>} />
         <Route path="/admin/organisations" element={<ProtectedRoute allowedRoles={["admin"]}><AdminOrganisations /></ProtectedRoute>} />
         <Route path="/admin/inventory" element={<ProtectedRoute allowedRoles={["admin"]}><AdminInventory /></ProtectedRoute>} />
+        <Route path="/admin/org-breakdown" element={<ProtectedRoute allowedRoles={["admin"]}><AdminOrgBreakdown /></ProtectedRoute>} />
 
         {/* Profile — all roles */}
         <Route path="/profile" element={<ProtectedRoute allowedRoles={["donor","organisation","hospital","admin"]}><Profile /></ProtectedRoute>} />

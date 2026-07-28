@@ -6,6 +6,7 @@ import {
   deleteUserController,
   getAdminStatsController,
   getAdminInventoryController,
+  getAdminOrgBreakdownController,
 } from "../controllers/adminController.js";
 import { adminMiddleware } from "../middlewares/authMiddleware.js";
 
@@ -28,5 +29,8 @@ adminRouter.get("/stats", adminMiddleware, getAdminStatsController);
 
 // GET /api/v1/admin/inventory — all inventory across all orgs
 adminRouter.get("/inventory", adminMiddleware, getAdminInventoryController);
+
+// GET /api/v1/admin/org-breakdown — blood group wise stock per organisation
+adminRouter.get("/org-breakdown", adminMiddleware, getAdminOrgBreakdownController);
 
 export default adminRouter;
