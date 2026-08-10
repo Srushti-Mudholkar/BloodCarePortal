@@ -1,0 +1,25 @@
+services:
+  # Service 1: MongoDB database
+  mongodb:
+    image: mongo:7
+    container_name: bloodcare-db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  # Service 2: Backend (Node.js + Express)
+  backend:
+    build: .
+    container_name: bloodcare-backend
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      - MONGO_URL=mongodb://mongodb:27017/bloodcare
+    depends_on:
+      - mongodb
+
+volumes:
+  mongo-data:
