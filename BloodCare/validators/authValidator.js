@@ -13,7 +13,8 @@ export const registerSchema = z.object({
   phone: z.string().min(10, "Phone must be at least 10 digits"),
   bloodGroup: z
     .enum(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"])
-    .optional(),
+    .optional()
+    .or(z.literal("")),
   website: z.string().optional(),  // accept any string or nothing — URL format check is not critical
   isVerified: z.boolean().optional(),
   verificationToken: z.string().optional(),
