@@ -1,0 +1,51 @@
+# This runs automatically every time you push code to main
+name: BloodCare CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Get the code
+      - uses: actions/checkout@v4
+
+      # Step 2: Set up Node.js
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # Step 3: Install backend dependencies
+      - name: Install backend dependencies
+        run: npm install
+        working-directory: BloodCare
+
+      # Step 4: Check for syntax errors (lint)
+      - name: Check for errors
+        run: node --check server.js
+        working-directory: BloodCare
+
+  frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # Install frontend dependencies
+      - name: Install frontend dependencies
+        run: npm install
+        working-directory: BloodCare/client
+
+      # Build frontend (catches compile errors)
+      - name: Build frontend
+        run: npm run build
+        working-directory: BloodCare/client
