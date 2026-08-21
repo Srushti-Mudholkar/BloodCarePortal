@@ -18,6 +18,7 @@ import OrgInventory from "./pages/organisation/OrgInventory.jsx";
 import OrgDonors from "./pages/organisation/OrgDonors.jsx";
 import OrgHospitals from "./pages/organisation/OrgHospitals.jsx";
 import OrgRequests from "./pages/organisation/OrgRequests.jsx";
+import OrgReports from "./pages/organisation/OrgReports.jsx";
 
 import HospitalDashboard from "./pages/hospital/HospitalDashboard.jsx";
 import HospitalHistory from "./pages/hospital/HospitalHistory.jsx";
@@ -30,6 +31,7 @@ import AdminOrganisations from "./pages/admin/AdminOrganisations.jsx";
 import AdminInventory from "./pages/admin/AdminInventory.jsx";
 import AdminOrgBreakdown from "./pages/admin/AdminOrgBreakdown.jsx";
 
+import ChatBot from "./pages/Chatbot.jsx";
 import Profile from "./pages/Profile.jsx";
 import ForgotPassword from "./pages/auth/ForgotPassword.jsx";
 import ResetPassword from "./pages/auth/ResetPassword.jsx";
@@ -70,6 +72,7 @@ function App() {
         <Route path="/organisation/donors" element={<ProtectedRoute allowedRoles={["organisation"]}><OrgDonors /></ProtectedRoute>} />
         <Route path="/organisation/hospitals" element={<ProtectedRoute allowedRoles={["organisation"]}><OrgHospitals /></ProtectedRoute>} />
         <Route path="/organisation/requests" element={<ProtectedRoute allowedRoles={["organisation"]}><OrgRequests /></ProtectedRoute>} />
+        <Route path="/organisation/reports" element={<ProtectedRoute allowedRoles={["organisation"]}><OrgReports /></ProtectedRoute>} />
 
         {/* Hospital */}
         <Route path="/hospital/dashboard" element={<ProtectedRoute allowedRoles={["hospital"]}><HospitalDashboard /></ProtectedRoute>} />
@@ -84,6 +87,8 @@ function App() {
         <Route path="/admin/inventory" element={<ProtectedRoute allowedRoles={["admin"]}><AdminInventory /></ProtectedRoute>} />
         <Route path="/admin/org-breakdown" element={<ProtectedRoute allowedRoles={["admin"]}><AdminOrgBreakdown /></ProtectedRoute>} />
 
+        {/* Chatbot */}
+        <Route path="/chat" element={<ProtectedRoute allowedRoles={["donor","organisation","hospital","admin"]}><ChatBot/></ProtectedRoute>} />
         {/* Profile — all roles */}
         <Route path="/profile" element={<ProtectedRoute allowedRoles={["donor","organisation","hospital","admin"]}><Profile /></ProtectedRoute>} />
 

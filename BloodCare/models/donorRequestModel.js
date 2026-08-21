@@ -31,6 +31,10 @@ const donorRequestSchema = new mongoose.Schema(
       enum: ["pending", "accepted", "rejected"],
       default: "pending",
     },
+    responseMessage: {
+      type: String,
+      default: "",
+    },
   },
   { timestamps: true }
 );

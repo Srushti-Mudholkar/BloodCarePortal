@@ -73,7 +73,7 @@ export const getReceivedDonorRequestsController = async (req, res) => {
 export const respondDonorRequestController = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, responseMessage } = req.body;
 
     const request = await DonorRequest.findById(id);
     if (!request) {
@@ -91,6 +91,7 @@ export const respondDonorRequestController = async (req, res) => {
     }
 
     request.status = status;
+    if (responseMessage) request.responseMessage = responseMessage;
     await request.save();
 
     return res.status(200).send({

@@ -30,17 +30,16 @@ export const registerController = async (req, res) => {
 
     const user = new Users({
       role,
-      name,
-      organisationName,
-      hospitalName,
+      ...(name && name !== "" && { name }),
+      ...(organisationName && organisationName !== "" && { organisationName }),
+      ...(hospitalName && hospitalName !== "" && { hospitalName }),
       email,
       password: hashedPassword,
       address,
       phone,
       website,
-      verificationToken,
-      // only set bloodGroup if it has a real value (donors only)
       ...(bloodGroup && bloodGroup !== "" && { bloodGroup }),
+      verificationToken,
     });
 
     await user.save();
@@ -152,6 +151,65 @@ export const loginController = async (req, res) => {
   }
 };
 
+export const googleLoginController = async(req,res) => {
+  try {
+    const {email,name, photourl} = req.body;
+
+    if(!email){
+      return res.status(400).send({
+        success : false,
+        message : 'Email is required'
+      })
+    }
+
+     // Find or create user
+    let user = await Users.findOne({email});
+ 
+    if(!user){
+       // First time Google login — create new user
+       user = new Users({
+        role : "donor", // default role for google login
+        name,
+        email,
+        password : "google-oauth-no-password",
+        address : "Not provider",
+        phone : "Not provided",
+        isVerified : true, //  Google already verified their email
+       });
+       await user.save()
+    }
+
+    // Generate JWT — same as normal login
+
+    const token = jwt.sign(
+      {userId: user._id, role : user.role},
+      process.env.JWT_SECRET,
+      {expiresIn: "1d"}
+    );
+
+    return res.status(200).send({
+      success : true,
+      message : 'Google login successfully',
+      token,
+      user : {
+        _id : user._id,
+        role : user.role,
+        name : user.name,
+        email : user.email,
+        phone : user.phone,
+        address : user.address,
+        bloodGroup : user.bloodGroup,
+      }
+    })
+  } catch (e){
+     console.log(e);
+     return res.status(500).send({
+      success: false, 
+      message: "Google login failed"
+     })
+  }
+}
+
 // GET CURRENT USER
 export const currentUserController = async (req, res) => {
   try {
@@ -173,6 +231,7 @@ export const currentUserController = async (req, res) => {
     });
   }
 };
+
 
 export const verifyEmailController = async(req,res)=>{
     try{

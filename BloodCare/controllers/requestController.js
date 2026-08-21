@@ -84,6 +84,11 @@ export const updateRequestStatusController = async (req, res) => {
       return res.status(404).send({ success: false, message: "Request not found" });
     }
 
+    // Prevent duplicate processing — only pending requests can be approved/rejected
+    if (request.status !== "pending") {
+      return res.status(400).send({ success: false, message: "This request has already been processed" });
+    }
+
     if (status === "approved") {
       // donor request = blood coming IN (donation)
       // hospital/donor-need request = blood going OUT (issued)

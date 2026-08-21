@@ -3,6 +3,8 @@ import dotenv from "dotenv";
 import colors from "colors";
 import morgan from "morgan";
 import cors from "cors";
+import helmet from 'helmet'
+import rateLimit from "express-rate-limit";
 import { connectDB } from "./config/db.js";
 import authRouter from "./routes/authRoutes.js";
 import inventoryRouter from "./routes/inventoryRoutes.js";
@@ -12,6 +14,7 @@ import protectedRouter from "./routes/protectedRoutes.js";
 import requestRouter from "./routes/requestRoutes.js";
 import userRouter from "./routes/userRoutes.js";
 import donorRequestRouter from "./routes/donorRequestRoutes.js";
+import chatRouter from "./routes/chatRoutes.js";
 
 // Load env vars
 dotenv.config();
@@ -26,6 +29,10 @@ app.use(express.json());
 app.use(cors());
 app.use(morgan("dev"));
 
+app.use(helmet());
+app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
+// 100 requests per 15 minutes per IP
+
 // Routes
 app.use("/api/v1/test", testRouter);
 app.use("/api/v1/auth", authRouter);
@@ -35,6 +42,7 @@ app.use("/api/v1/protected", protectedRouter);
 app.use("/api/v1/request", requestRouter);
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/donor-request", donorRequestRouter);
+app.use("/api/v1/chat",chatRouter)
 
 // 404 handler
 app.use((req, res) => {

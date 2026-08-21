@@ -22,6 +22,7 @@ const DonorSearch = () => {
   const [receivedRequests, setReceivedRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("All");
+  const [availableGroups, setAvailableGroups] = useState(new Set());
 
   // Request modal state
   const [showModal, setShowModal] = useState(false);
@@ -32,7 +33,14 @@ const DonorSearch = () => {
     try {
       const query = bg && bg !== "All" ? `?bloodGroup=${encodeURIComponent(bg)}` : "";
       const { data } = await API.get(`/donor-request/donors${query}`);
-      if (data.success) setDonors(data.donors);
+      if (data.success) {
+        setDonors(data.donors);
+        // Track which blood groups have at least one donor available
+        if (!bg || bg === "All") {
+          const groups = new Set(data.donors.map((d) => d.bloodGroup));
+          setAvailableGroups(groups);
+        }
+      }
     } catch (e) { console.log(e); }
   };
 
@@ -85,8 +93,12 @@ const DonorSearch = () => {
 
   // Respond to a received request
   const handleRespond = async (id, status) => {
+    let responseMessage = "";
+    if (status === "rejected") {
+      responseMessage = prompt("Reason for rejecting (optional):") || "";
+    }
     try {
-      const { data } = await API.put(`/donor-request/respond/${id}`, { status });
+      const { data } = await API.put(`/donor-request/respond/${id}`, { status, responseMessage });
       if (data.success) {
         toast.success(`Request ${status}`);
         fetchReceived();
@@ -125,6 +137,7 @@ const DonorSearch = () => {
     { key: "bloodGroup", label: "Blood Group", render: (r) => <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">{r.bloodGroup}</span>, csvValue: (r) => r.bloodGroup },
     { key: "quantity", label: "Qty" },
     { key: "status", label: "Status", render: (r) => statusBadge(r.status), csvValue: (r) => r.status },
+    { key: "responseMessage", label: "Response", render: (r) => r.responseMessage || "—" },
     {
       key: "contact", label: "Contact",
       render: (r) => r.status === "accepted" ? (
@@ -190,14 +203,30 @@ const DonorSearch = () => {
       {tab === "search" && (
         <div className="mb-4">
           <div className="flex flex-wrap gap-1.5">
-            {bloodGroups.map((bg) => (
-              <button key={bg} onClick={() => setFilter(bg)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border-2
-                  ${filter === bg ? "border-red-500 bg-red-600 text-white" : "border-gray-200 text-gray-600 hover:border-red-300"}`}>
-                {bg}
-              </button>
-            ))}
+            {bloodGroups.map((bg) => {
+              const isSelected = filter === bg;
+              const isAvailable = bg === "All" || availableGroups.has(bg);
+              return (
+                <button key={bg} onClick={() => setFilter(bg)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border-2
+                    ${isSelected
+                      ? "border-red-500 bg-red-600 text-white"
+                      : isAvailable
+                        ? "border-green-300 bg-green-50 text-green-700 hover:border-green-500"
+                        : "border-gray-200 bg-gray-100 text-gray-400"
+                    }`}>
+                  {bg}
+                  {bg !== "All" && !isSelected && (
+                    <span className="ml-1">{isAvailable ? "●" : "○"}</span>
+                  )}
+                </button>
+              );
+            })}
           </div>
+          <p className="text-xs text-gray-400 mt-2">
+            <span className="text-green-600">●</span> Donors available &nbsp;
+            <span className="text-gray-400">○</span> No donors
+          </p>
         </div>
       )}
 

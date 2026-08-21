@@ -14,12 +14,15 @@ services:
     container_name: bloodcare-backend
     ports:
       - "8080:8080"
+      
     env_file:
       - .env
     environment:
       - MONGO_URL=mongodb://mongodb:27017/bloodcare
+      - REDIS_URL=redis://redis:6379
     depends_on:
       - mongodb
+      - redis
 
   # Service 3: Frontend (React + Nginx)
   frontend:
@@ -29,6 +32,13 @@ services:
       - "5173:80"
     depends_on:
       - backend
+
+    # Service 4: Redis
+  redis:
+      image: redis:alpine
+      container_name: bloodcare-redis
+      ports:
+        - "6379:6379"
 
 volumes:
   mongo-data:

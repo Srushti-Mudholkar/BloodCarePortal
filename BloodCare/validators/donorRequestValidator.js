@@ -15,4 +15,5 @@ export const respondDonorRequestSchema = z.object({
   status: z.enum(["accepted", "rejected"], {
     required_error: "Status is required",
   }),
+  responseMessage: z.string().optional(),
 });

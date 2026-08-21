@@ -8,6 +8,8 @@ import {
   getOrgDonorsController,
   getOrgHospitalsController,
   getOrganisationsListController,
+  getBloodInReportController,
+  getBloodOutReportController
 } from "../controllers/inventoryController.js";
 import { authMiddleware } from "../middlewares/authMiddleware.js";
 import { validate } from "../middlewares/validateMiddleware.js";
@@ -37,6 +39,9 @@ inventoryRouter.get("/org-hospitals", authMiddleware, getOrgHospitalsController)
 
 // GET /api/v1/inventory/organisations — all organisations (for donor/hospital request form dropdown)
 inventoryRouter.get("/organisations", authMiddleware, getOrganisationsListController);
+
+inventoryRouter.get("/report-in", authMiddleware, getBloodInReportController);
+inventoryRouter.get("/report-out", authMiddleware, getBloodOutReportController);
 
 export default inventoryRouter;
  

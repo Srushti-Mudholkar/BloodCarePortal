@@ -5,6 +5,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import API from "../../utils/axios.js";
+import { signInWithPopup } from "firebase/auth";
+import {auth, googleProvider} from '../../utils/firebase.js'
 import { loginStart, loginSuccess, loginFailure } from "../../redux/authSlice.js";
 import HeroIllustration from "../../assets/HeroIllustration.jsx";
 
@@ -31,6 +33,28 @@ const Login = () => {
   const dispatch = useDispatch();
  // Used to change pages after successful login
   const navigate = useNavigate();
+
+  const handleGoogleLogin = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const { email, displayName, photoURL } = result.user;
+
+      const { data } = await API.post("/auth/google-login", {
+        email,
+        name: displayName,
+        photoURL,
+      });
+
+      if (data.success) {
+        dispatch(loginSuccess({ user: data.user, token: data.token }));
+        navigate("/donor/dashboard");
+      }
+    } catch (e) {
+      console.log(e);
+      toast.error("Google login failed");
+    }
+  };
+
   // Reads data from Redux Store (Global State)
 // We only need 'loading' from auth state here
   const { loading } = useSelector((s) => s.auth);
@@ -222,6 +246,11 @@ const Login = () => {
                 ) : "Sign In →"}
               </button>
             </form>
+
+            <button type="button" onClick={handleGoogleLogin}
+                className="w-full py-3 mt-3 rounded-2xl border-2 border-gray-200 font-semibold text-sm text-gray-600 hover:bg-gray-50 transition-all flex items-center justify-center gap-2">
+                <span>🔵</span> Continue with Google
+            </button>
 
             <div className="mt-6 pt-6 border-t border-gray-100 text-center">
               <p className="text-sm text-gray-500">

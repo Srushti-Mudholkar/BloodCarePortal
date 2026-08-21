@@ -1,6 +1,7 @@
 import Inventory from "../models/inventoryModel.js";
 import Users from "../models/userModel.js";
 import mongoose from "mongoose";
+import redisClient from "../utils/redis.js";
 import { sendDonationConfirmationEmail, sendBloodIssuedEmail } from "../utils/emailService.js";
 
 // CREATE BLOOD INVENTORY (donation in / request out)
@@ -21,6 +22,23 @@ export const createInventoryController = async (req, res) => {
           message: `Donor blood group is ${donor.bloodGroup}, not ${bloodGroup}`,
         });
       }
+
+      // Check donation cooldown — 90 days minimum between donations
+      const lastDonation = await Inventory.findOne({
+        donor: donor._id,
+        inventoryType: "in"
+      }).sort({ createdAt: -1 });
+
+      if (lastDonation) {
+        const daysSince = (Date.now() - lastDonation.createdAt) / (1000 * 60 * 60 * 24);
+        if (daysSince < 90) {
+          return res.status(400).send({
+            success: false,
+            message: `Donor must wait ${Math.ceil(90 - daysSince)} more days before donating again. Last donation was ${Math.floor(daysSince)} days ago.`
+          });
+        }
+      }
+
       const inventory = new Inventory({
         inventoryType,
         bloodGroup,
@@ -30,6 +48,8 @@ export const createInventoryController = async (req, res) => {
         organisation: req.user.userId,
       });
       await inventory.save();
+       
+     await redisClient.del(`availability:${req.user.userId}`);
 
       // Send confirmation email to donor
       const org = await Users.findById(req.user.userId);
@@ -89,6 +109,8 @@ export const createInventoryController = async (req, res) => {
       });
       await inventory.save();
 
+      await redisClient.del(`availability:${req.user.userId}`);
+
       // Send confirmation email
       const org = await Users.findById(req.user.userId);
       if (recipientType === "hospital") {
@@ -128,6 +150,14 @@ export const getInventoryController = async (req, res) => {
 // GET BLOOD GROUP AVAILABILITY (for an organisation)
 export const getBloodGroupAvailabilityController = async (req, res) => {
   try {
+   const cacheKey = `availability:${req.user.userId}`;
+
+    // Check Redis cache first
+    const cached = await redisClient.get(cacheKey);
+    if(cached){
+      return res.status(200).send(JSON.parse(cached));
+    }
+
     const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
     const availability = [];
 
@@ -148,7 +178,10 @@ export const getBloodGroupAvailabilityController = async (req, res) => {
       });
     }
 
-    return res.status(200).send({ success: true, message: "Blood availability fetched", availability });
+   const result = res.status(200).send({ success: true, message: "Blood availability fetched", availability });
+ 
+    // Store in Redis with 60 second TTl
+    await redisClient.setEx(cacheKey,60,JSON.stringify(result))
   } catch (error) {
     console.log(error);
     return res.status(500).send({ success: false, message: "Error fetching availability", error: error.message });
@@ -242,3 +275,65 @@ export const getOrganisationsListController = async (req, res) => {
     return res.status(500).send({ success: false, message: "Error fetching organisations", error: error.message });
   }
 };
+
+// GET BLOOD IN REPORT — grouped by donor
+export const getBloodInReportController = async (req, res) => {
+  try {
+    const orgId = new mongoose.Types.ObjectId(req.user.userId);
+
+    const report = await Inventory.aggregate([
+      { $match: { organisation: orgId, inventoryType: "in" } },
+      {
+        $group: {
+          _id: { donor: "$donor", bloodGroup: "$bloodGroup" },
+          totalQuantity: { $sum: "$quantity" },
+          donations: { $sum: 1 },
+          lastDonation: { $max: "$createdAt" }
+        }
+      },
+      { $sort: { lastDonation: -1 } }
+    ]);
+
+    // Populate donor names
+    const populatedReport = await Users.populate(report, {
+      path: "_id.donor",
+      select: "name email phone bloodGroup"
+    });
+
+    return res.status(200).send({ success: true, report: populatedReport });
+  } catch (e) {
+    console.log(e);
+    return res.status(500).send({ success: false, message: "Error generating report" });
+  }
+};
+
+// GET BLOOD OUT REPORT — grouped by hospital/donor
+export const getBloodOutReportController = async (req, res) => {
+  try {
+    const orgId = new mongoose.Types.ObjectId(req.user.userId);
+
+    const report = await Inventory.aggregate([
+      { $match: { organisation: orgId, inventoryType: "out" } },
+      {
+        $group: {
+          _id: { hospital: "$hospital", donor: "$donor", bloodGroup: "$bloodGroup" },
+          totalQuantity: { $sum: "$quantity" },
+          issues: { $sum: 1 },
+          lastIssued: { $max: "$createdAt" }
+        }
+      },
+      { $sort: { lastIssued: -1 } }
+    ]);
+
+    const populatedReport = await Users.populate(report, [
+      { path: "_id.hospital", select: "hospitalName email phone" },
+      { path: "_id.donor", select: "name email phone" }
+    ]);
+
+    return res.status(200).send({ success: true, report: populatedReport });
+  } catch (e) {
+    console.log(e);
+    return res.status(500).send({ success: false, message: "Error generating report" });
+  }
+};
+

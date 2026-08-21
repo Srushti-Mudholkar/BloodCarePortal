@@ -2,6 +2,7 @@ import express from "express";
 import {
   registerController,
   loginController,
+  googleLoginController,
   currentUserController,
   verifyEmailController,
 } from "../controllers/authController.js";
@@ -22,5 +23,8 @@ authRouter.get("/current-user", authMiddleware, currentUserController);
 
 // GET /api/v1/auth/verify-email/:token
 authRouter.get("/verify-email/:token", verifyEmailController);
+
+// Add route (no authMiddleware — it's a login route):
+authRouter.post("/google-login", googleLoginController);
 
 export default authRouter;

@@ -32,7 +32,7 @@ const Register = () => {
   const formik = useFormik({
     initialValues: {
       role: "donor", name: "", organisationName: "", hospitalName: "",
-      email: "", password: "", address: "", phone: "", bloodGroup: "", website: "",
+      email: "", password: "", address: "", phone: "", bloodGroup: undefined, website: "",
     },
     validationSchema: Yup.object().shape({
       role: Yup.string().required(),
