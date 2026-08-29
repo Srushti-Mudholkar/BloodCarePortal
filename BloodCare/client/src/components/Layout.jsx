@@ -11,7 +11,6 @@ const navLinks = {
     { to: "/donor/requests",     label: "Donate Blood",     icon: "🩸" },
     { to: "/donor/need-blood",   label: "Need Blood",       icon: "💉" },
     { to: "/donor/find-donors",  label: "Find Donors",      icon: "🔍" },
-    { to: "/chat",               label: "AI Assistant",      icon: "🤖" },
     { to: "/profile",            label: "My Profile",        icon: "👤" },
 
   ],
@@ -22,14 +21,12 @@ const navLinks = {
     { to: "/organisation/donors",    label: "Donors",            icon: "👤" },
     { to: "/organisation/hospitals", label: "Hospitals",         icon: "🏥" },
     { to: "/organisation/reports" , label: "Reports",            icon: "📊"},
-     { to: "/chat",               label: "AI Assistant",      icon: "🤖" },
     { to: "/profile",                label: "My Profile",        icon: "⚙️" },
   ],
   hospital: [
     { to: "/hospital/dashboard", label: "Dashboard",       icon: "🏠" },
     { to: "/hospital/requests",  label: "Blood Requests",  icon: "🩸" },
     { to: "/hospital/history",   label: "Request History", icon: "📋" },
-    { to: "/chat",               label: "AI Assistant",      icon: "🤖" },
     { to: "/chat",               label: "AI Assistant",      icon: "🤖" },
     { to: "/profile",            label: "My Profile",      icon: "👤" },
   ],
@@ -40,7 +37,6 @@ const navLinks = {
     { to: "/admin/organisations", label: "Organisations", icon: "🏢" },
     { to: "/admin/inventory",      label: "Inventory",      icon: "🩸" },
     { to: "/admin/org-breakdown",  label: "Blood Stock",    icon: "📊" },
-    { to: "/chat",               label: "AI Assistant",      icon: "🤖" },
     { to: "/profile",             label: "My Profile",    icon: "⚙️" },
   ],
 };

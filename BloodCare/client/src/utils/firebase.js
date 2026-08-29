@@ -2,7 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAEXpdBqhZKS9fJzcP96KBCVfi5qK8Q0j0",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyAEXpdBqhZKS9fJzcP96KBCVfi5qK8Q0j0",
   authDomain: "bloodcare-a5d35.firebaseapp.com",
   projectId: "bloodcare-a5d35",
   storageBucket: "bloodcare-a5d35.firebasestorage.app",

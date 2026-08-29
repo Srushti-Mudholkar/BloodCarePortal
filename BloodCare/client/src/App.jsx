@@ -31,7 +31,6 @@ import AdminOrganisations from "./pages/admin/AdminOrganisations.jsx";
 import AdminInventory from "./pages/admin/AdminInventory.jsx";
 import AdminOrgBreakdown from "./pages/admin/AdminOrgBreakdown.jsx";
 
-import ChatBot from "./pages/Chatbot.jsx";
 import Profile from "./pages/Profile.jsx";
 import ForgotPassword from "./pages/auth/ForgotPassword.jsx";
 import ResetPassword from "./pages/auth/ResetPassword.jsx";
@@ -87,8 +86,6 @@ function App() {
         <Route path="/admin/inventory" element={<ProtectedRoute allowedRoles={["admin"]}><AdminInventory /></ProtectedRoute>} />
         <Route path="/admin/org-breakdown" element={<ProtectedRoute allowedRoles={["admin"]}><AdminOrgBreakdown /></ProtectedRoute>} />
 
-        {/* Chatbot */}
-        <Route path="/chat" element={<ProtectedRoute allowedRoles={["donor","organisation","hospital","admin"]}><ChatBot/></ProtectedRoute>} />
         {/* Profile — all roles */}
         <Route path="/profile" element={<ProtectedRoute allowedRoles={["donor","organisation","hospital","admin"]}><Profile /></ProtectedRoute>} />
 

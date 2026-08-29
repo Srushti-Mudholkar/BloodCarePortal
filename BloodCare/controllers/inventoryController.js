@@ -49,7 +49,7 @@ export const createInventoryController = async (req, res) => {
       });
       await inventory.save();
        
-     await redisClient.del(`availability:${req.user.userId}`);
+     if (redisClient) await redisClient.del(`availability:${req.user.userId}`);
 
       // Send confirmation email to donor
       const org = await Users.findById(req.user.userId);
@@ -109,7 +109,7 @@ export const createInventoryController = async (req, res) => {
       });
       await inventory.save();
 
-      await redisClient.del(`availability:${req.user.userId}`);
+      if (redisClient) await redisClient.del(`availability:${req.user.userId}`);
 
       // Send confirmation email
       const org = await Users.findById(req.user.userId);
@@ -153,7 +153,7 @@ export const getBloodGroupAvailabilityController = async (req, res) => {
    const cacheKey = `availability:${req.user.userId}`;
 
     // Check Redis cache first
-    const cached = await redisClient.get(cacheKey);
+    const cached = redisClient ? await redisClient.get(cacheKey) : null;
     if(cached){
       return res.status(200).send(JSON.parse(cached));
     }
@@ -181,7 +181,7 @@ export const getBloodGroupAvailabilityController = async (req, res) => {
    const result = res.status(200).send({ success: true, message: "Blood availability fetched", availability });
  
     // Store in Redis with 60 second TTl
-    await redisClient.setEx(cacheKey,60,JSON.stringify(result))
+    if (redisClient) await redisClient.setEx(cacheKey,60,JSON.stringify(result))
   } catch (error) {
     console.log(error);
     return res.status(500).send({ success: false, message: "Error fetching availability", error: error.message });
