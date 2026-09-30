@@ -1,0 +1,38 @@
+# ===== PART 1: DEPLOYMENT (runs your app, keeps N copies alive) =====
+apiVersion: apps/v1        # Deployment lives in the "apps" API group → apps/v1
+kind: Deployment           # what I'm creating: a Deployment
+metadata:
+  name: bloodcare          # the deployment's name
+spec:
+  replicas: 2              # run 2 identical Pods (2 copies of my backend) — for availability + self-healing
+  selector:
+    matchLabels:
+      app: bloodcare       # this Deployment MANAGES pods that have the label app=bloodcare
+  template:                # the blueprint for each Pod:
+    metadata:
+      labels:
+        app: bloodcare     # label each Pod (MUST match the selector above — that's how they're linked)
+    spec:
+      containers:
+        - name: bloodcare
+          image: srushti012/bloodcare-backend:latest   # MY image from Docker Hub
+          ports:
+            - containerPort: 8080         # the port my app listens on inside the container
+          envFrom:
+            - secretRef:
+                name: bloodcare-env       # inject env vars (MONGO_URL, JWT_SECRET) from a k8s Secret
+
+---   # separates the two objects in one file
+
+# ===== PART 2: SERVICE (exposes the Pods so they're reachable) =====
+apiVersion: v1             # Service is a CORE object → just v1 (no group)
+kind: Service
+metadata:
+  name: bloodcare-service
+spec:
+  type: NodePort           # exposes the app on a port so I can reach it from outside the cluster
+  selector:
+    app: bloodcare         # routes traffic to Pods labeled app=bloodcare (the ones the Deployment made)
+  ports:
+    - port: 8080
+      targetPort: 8080     # forward to the container's port 8080
